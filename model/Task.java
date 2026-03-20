@@ -1,4 +1,5 @@
 package model;
+
 import java.time.LocalDate;
 
 public class Task {
@@ -7,8 +8,8 @@ public class Task {
     private LocalDate deadline;
     private int difficulty;
     private int estimatedHours;
-    // Fortschritt
-    // Status (Fertig / Offen)
+    // private boolean status;     // Status (Fertig / Offen)
+    // private int progress;       // Fortschritt (in %)
 
     public Task(String name, LocalDate deadline, int difficulty, int estimatedHours) {
         this.name = name;
