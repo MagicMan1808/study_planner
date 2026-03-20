@@ -1,3 +1,4 @@
+package model;
 import java.time.LocalDate;
 
 public class Task {
@@ -6,12 +7,14 @@ public class Task {
     private LocalDate deadline;
     private int difficulty;
     private int estimatedHours;
+    // Fortschritt
+    // Status (Fertig / Offen)
 
     public Task(String name, LocalDate deadline, int difficulty, int estimatedHours) {
         this.name = name;
         this.deadline = deadline;
         this.difficulty = difficulty;
-        this.estimatedHours = estimatedHours;
+        this.estimatedHours = estimatedHours; // benötigte Zeit
     }
 
     public String getName() {
@@ -28,5 +31,10 @@ public class Task {
 
     public int getEstimatedHours() {
         return estimatedHours;
+    }
+
+    @Override
+    public String toString() {
+        return name + " | Deadline: " + deadline + " | Difficulty: " + difficulty + " | Hours: " + estimatedHours;
     }
 }
