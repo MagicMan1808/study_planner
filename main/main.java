@@ -18,11 +18,11 @@ import java.util.ArrayList;
 public class Main {
     public static void main(String[] args) {
         // Task.java test
-        Task task = new Task("Prog I", LocalDate.of(2026, 7, 30), 4, 20);
+        //Task task = new Task("Prog I", LocalDate.of(2026, 7, 30), 4, 20);
         //System.out.println(task);
 
         // StudySession.java test
-        StudySession session = new StudySession(LocalDate.of(2026, 1, 3), "Prog II", 5);
+        //StudySession session = new StudySession(LocalDate.of(2026, 1, 3), "Prog II", 5);
         //System.out.println(session);
 
         // StudyPlannerAlgorithm.java test

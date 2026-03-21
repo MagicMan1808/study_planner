@@ -5,6 +5,8 @@ import model.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 public class StudyPlannerAlgorithm {
 
@@ -17,6 +19,12 @@ public class StudyPlannerAlgorithm {
     }
 
     public List<StudySession> generatePlan(List<Task> tasks) {
+        Map<Task, Integer> remainingHours = new HashMap<>();
+
+        for (Task task : tasks) {
+            remainingHours.put(task, task.getEstimatedHours());
+        }
+
         List<StudySession> plan = new ArrayList<>();
 
         LocalDate today = LocalDate.now();
@@ -30,7 +38,7 @@ public class StudyPlannerAlgorithm {
             // 1. Filter: nur Tasks die noch relevant sind
             List<Task> activeTasks = new ArrayList<>();
             for (Task task : tasks) {
-                if (!task.getDeadline().isBefore(currentDate)) {
+                if (!task.getDeadline().isBefore(currentDate) && remainingHours.get(task) > 0) {
                     activeTasks.add(task);
                 }
             }
@@ -41,7 +49,7 @@ public class StudyPlannerAlgorithm {
             // 2. Filter: sortiere nach Priorität
             activeTasks.sort((a, b) -> Double.compare(calculatePriority(b, currentDate), calculatePriority(a, currentDate)));
 
-            int remainingHours = dailyHours;
+            int remainingHoursPerDay = dailyHours;
 
             double totalPriority = 0;
 
@@ -51,20 +59,24 @@ public class StudyPlannerAlgorithm {
 
             // 3. Filter: verteile Zeit auf Tasks
             for (Task task : activeTasks) {
-                if (remainingHours <= 0) {
+                if (remainingHoursPerDay <= 0) {
                     break;
                 }
 
                 double priority = calculatePriority(task, currentDate);
 
                 int hours = (int) Math.round((priority / totalPriority) * dailyHours);
+                int remaining = remainingHours.get(task);
 
-                hours = Math.min(hours, remainingHours);
+                hours = Math.min(hours, remaining);
+                hours = Math.min(hours, remainingHoursPerDay);
                 hours = Math.max(1, hours);
 
                 plan.add(new StudySession(currentDate, task.getName(), hours));
 
-                remainingHours -= hours;
+                remainingHours.put(task, remaining - hours);
+
+                remainingHoursPerDay -= hours;
             }
         }
 
