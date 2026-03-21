@@ -6,6 +6,7 @@ package main;
 
 import model.Task;
 import model.StudySession;
+import planner.PlanningService;
 import planner.StudyPlannerAlgorithm;
 
 
@@ -31,8 +32,8 @@ public class Main {
         tasks.add(new Task("Prog", LocalDate.now().plusDays(7),  3, 8));
         tasks.add(new Task("GBS", LocalDate.now().plusDays(10), 2, 5));
 
-        StudyPlannerAlgorithm algo = new StudyPlannerAlgorithm();
-        List<StudySession> plan = algo.generatePlan(tasks);
+        PlanningService service = new PlanningService();
+        List<StudySession> plan = service.createPlan(tasks);
 
         for (StudySession session : plan) {
             System.out.println(session);
