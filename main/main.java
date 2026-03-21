@@ -34,6 +34,8 @@ public class Main {
         StudyPlannerAlgorithm algo = new StudyPlannerAlgorithm();
         List<StudySession> plan = algo.generatePlan(tasks);
 
-        plan.forEach(System.out::println);
+        for (StudySession session : plan) {
+            System.out.println(session);
+        }
     }
 }
