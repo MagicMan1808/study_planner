@@ -4,6 +4,7 @@ import model.Task;
 import model.StudySession;
 import planner.PlanningService;
 import planner.StudyPlannerAlgorithm;
+import storage.StorageManager;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -25,10 +26,20 @@ public class MainApp extends Application {
 
         button.setOnAction(e -> {
             // Demo Tasks (später aus Storage)
-            List<Task> tasks = new ArrayList<>();
-            tasks.add(new Task("Mathe", LocalDate.now().plusDays(3), 5, 10));
-            tasks.add(new Task("Prog", LocalDate.now().plusDays(7), 3, 8));
-            tasks.add(new Task("GBS", LocalDate.now().plusDays(10), 2, 5));
+            //List<Task> tasks = new ArrayList<>();
+            //tasks.add(new Task("Mathe", LocalDate.now().plusDays(3), 5, 10));
+            //tasks.add(new Task("Prog", LocalDate.now().plusDays(7), 3, 8));
+            //tasks.add(new Task("GBS", LocalDate.now().plusDays(10), 2, 5));
+
+            StorageManager storage = new StorageManager();
+            List<Task> tasks = storage.loadTasks();
+
+            // Fallback falls Storage leer
+            if (tasks.isEmpty()) {
+                tasks = new ArrayList<>();
+                tasks.add(new Task("Mathe", LocalDate.now().plusDays(3), 5, 10));
+                tasks.add(new Task("Prog", LocalDate.now().plusDays(7), 3, 8));
+            }
 
             // Plan berechnen
             PlanningService service = new PlanningService();
