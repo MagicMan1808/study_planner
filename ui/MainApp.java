@@ -14,6 +14,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.VBox;
+import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Label;
@@ -147,20 +148,39 @@ public class MainApp extends Application {
             deleteField.clear();
         });
 
-        VBox root = new VBox(10,
-                new Label("Neuer Task:"),
+
+        HBox inputRow = new HBox(10,
                 nameField,
                 deadlineField,
                 difficultyField,
-                hoursField,
+                hoursField
+        );
+
+        HBox deleteRow = new HBox(10,
+                deleteField,
+                deleteButton
+        );
+
+        HBox buttonRow = new HBox(10,
+                addButton,
+                showTasksButton,
+                button
+        );
+
+        output.setPrefHeight(200);
+
+        VBox root = new VBox(15,
+                new Label("Task hinzufügen:"),
+                inputRow,
                 addButton,
 
-                new Label("Tasks löschen:"),
-                deleteField,
-                deleteButton,
+                new Label("Task löschen:"),
+                deleteRow,
 
-                showTasksButton,
-                button,
+                new Label("Aktionen:"),
+                buttonRow,
+
+                new Label("Ausgabe:"),
                 output
         );
 
