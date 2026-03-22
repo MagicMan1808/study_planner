@@ -35,12 +35,17 @@ public class MainApp extends Application {
         TextField hoursField = new TextField();
         hoursField.setPromptText("Hours");
 
+        TextField deleteField = new TextField();
+        deleteField.setPromptText("Name zum Löschen");
+
         Button button = new Button("Plan anzeigen");
         TextArea output = new TextArea();
 
         Button addButton = new Button("Task hinzufügen");
 
         Button showTasksButton = new Button("Tasks anzeigen");
+
+        Button deleteButton = new Button("Task löschen");
 
         button.setOnAction(e -> {
             // Demo Tasks (später aus Storage)
@@ -121,6 +126,27 @@ public class MainApp extends Application {
             output.setText(sb.toString());
         });
 
+        deleteButton.setOnAction(e -> {
+
+            String nameToDelete = deleteField.getText();
+
+            StorageManager storage = new StorageManager();
+            List<Task> tasks = storage.loadTasks();
+
+            boolean removed = tasks.removeIf(task ->
+                task.getName().equalsIgnoreCase(nameToDelete)
+            );
+
+            if (removed) {
+                storage.saveTasks(tasks);
+                output.setText("Task gelöscht!");
+            } else {
+                output.setText("Task nicht gefunden!");
+            }
+
+            deleteField.clear();
+        });
+
         VBox root = new VBox(10,
                 new Label("Neuer Task:"),
                 nameField,
@@ -128,12 +154,17 @@ public class MainApp extends Application {
                 difficultyField,
                 hoursField,
                 addButton,
+
+                new Label("Tasks löschen:"),
+                deleteField,
+                deleteButton,
+
                 showTasksButton,
                 button,
                 output
         );
 
-        Scene scene = new Scene(root, 400, 350);
+        Scene scene = new Scene(root, 500, 450);
 
         stage.setTitle("Study Planner");
         stage.setScene(scene);
