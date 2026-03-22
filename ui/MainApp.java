@@ -15,14 +15,30 @@ import javafx.scene.control.Button;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import javafx.scene.control.TextField;
+import javafx.scene.control.Label;
 
 public class MainApp extends Application {
 
     @Override
     public void start(Stage stage) {
 
+        TextField nameField = new TextField();
+        nameField.setPromptText("Name");
+
+        TextField deadlineField = new TextField();
+        deadlineField.setPromptText("Deadline (YYYY-MM-DD)");
+
+        TextField difficultyField = new TextField();
+        difficultyField.setPromptText("Difficulty (1-5)");
+
+        TextField hoursField = new TextField();
+        hoursField.setPromptText("Hours");
+
         Button button = new Button("Plan anzeigen");
         TextArea output = new TextArea();
+
+        Button addButton = new Button("Task hinzufügen");
 
         button.setOnAction(e -> {
             // Demo Tasks (später aus Storage)
@@ -55,7 +71,44 @@ public class MainApp extends Application {
             output.setText(sb.toString());
         });
 
-        VBox root = new VBox(10, button, output);
+        addButton.setOnAction(e -> {
+            try {
+                String name = nameField.getText();
+                LocalDate deadline = LocalDate.parse(deadlineField.getText());
+                int difficulty = Integer.parseInt(difficultyField.getText());
+                int hours = Integer.parseInt(hoursField.getText());
+
+                Task newTask = new Task(name, deadline, difficulty, hours);
+
+                StorageManager storage = new StorageManager();
+                List<Task> tasks = storage.loadTasks();
+
+                tasks.add(newTask);
+                storage.saveTasks(tasks);
+
+                output.setText("Task gespeichert!");
+
+                // Felder leeren
+                nameField.clear();
+                deadlineField.clear();
+                difficultyField.clear();
+                hoursField.clear();
+
+            } catch (Exception ex) {
+                output.setText("Fehler bei Eingabe!");
+            }
+        });
+
+        VBox root = new VBox(10,
+                new Label("Neuer Task:"),
+                nameField,
+                deadlineField,
+                difficultyField,
+                hoursField,
+                addButton,
+                button,
+                output
+        );
 
         Scene scene = new Scene(root, 400, 300);
 
