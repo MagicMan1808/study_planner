@@ -40,6 +40,8 @@ public class MainApp extends Application {
 
         Button addButton = new Button("Task hinzufügen");
 
+        Button showTasksButton = new Button("Tasks anzeigen");
+
         button.setOnAction(e -> {
             // Demo Tasks (später aus Storage)
             //List<Task> tasks = new ArrayList<>();
@@ -99,6 +101,26 @@ public class MainApp extends Application {
             }
         });
 
+        showTasksButton.setOnAction(e -> {
+
+            StorageManager storage = new StorageManager();
+            List<Task> tasks = storage.loadTasks();
+
+            if (tasks.isEmpty()) {
+                output.setText("Keine Tasks vorhanden.");
+                return;
+            }
+
+            StringBuilder sb = new StringBuilder();
+            sb.append("--- TASKS ---\n");
+
+            for (Task task : tasks) {
+                sb.append(task).append("\n");
+            }
+
+            output.setText(sb.toString());
+        });
+
         VBox root = new VBox(10,
                 new Label("Neuer Task:"),
                 nameField,
@@ -106,11 +128,12 @@ public class MainApp extends Application {
                 difficultyField,
                 hoursField,
                 addButton,
+                showTasksButton,
                 button,
                 output
         );
 
-        Scene scene = new Scene(root, 400, 300);
+        Scene scene = new Scene(root, 400, 350);
 
         stage.setTitle("Study Planner");
         stage.setScene(scene);
