@@ -1,5 +1,13 @@
 package ui;
 
+import model.Task;
+import model.StudySession;
+import planner.PlanningService;
+import planner.StudyPlannerAlgorithm;
+
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -14,6 +22,27 @@ public class MainApp extends Application {
 
         Button button = new Button("Plan anzeigen");
         TextArea output = new TextArea();
+
+        button.setOnAction(e -> {
+            // Demo Tasks (später aus Storage)
+            List<Task> tasks = new ArrayList<>();
+            tasks.add(new Task("Mathe", LocalDate.now().plusDays(3), 5, 10));
+            tasks.add(new Task("Prog", LocalDate.now().plusDays(7), 3, 8));
+            tasks.add(new Task("GBS", LocalDate.now().plusDays(10), 2, 5));
+
+            // Plan berechnen
+            PlanningService service = new PlanningService();
+            List<StudySession> plan = service.createPlan(tasks);
+
+            // Ausgabe vorbereiten
+            StringBuilder sb = new StringBuilder();
+            for (StudySession session : plan) {
+                sb.append(session).append("\n");
+            }
+
+            // Text anzeigen
+            output.setText(sb.toString());
+        });
 
         VBox root = new VBox(10, button, output);
 
