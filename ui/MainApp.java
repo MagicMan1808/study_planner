@@ -3,7 +3,7 @@ package ui;
 import model.Task;
 import model.StudySession;
 import planner.PlanningService;
-import planner.StudyPlannerAlgorithm;
+//import planner.StudyPlannerAlgorithm;
 import storage.StorageManager;
 
 import java.time.LocalDate;
@@ -12,12 +12,13 @@ import java.util.List;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
-import javafx.scene.control.TextArea;
+//import javafx.scene.control.TextArea;
 import javafx.scene.layout.VBox;
 import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListView;
 
 public class MainApp extends Application {
 
@@ -39,14 +40,91 @@ public class MainApp extends Application {
         TextField deleteField = new TextField();
         deleteField.setPromptText("Name zum Löschen");
 
+        String fieldStyle = "-fx-font-size: 13px; -fx-background-radius: 8;";
+
+        String buttonStyle = 
+            "-fx-font-size: 14px;" +
+            "-fx-background-radius: 10" +
+            "-fx-padding: 8 15 8 15";
+
+        nameField.setStyle(fieldStyle);
+        deadlineField.setStyle(fieldStyle);
+        difficultyField.setStyle(fieldStyle);
+        hoursField.setStyle(fieldStyle);
+        deleteField.setStyle(fieldStyle);
+
         Button button = new Button("Plan anzeigen");
-        TextArea output = new TextArea();
+
+        button.setStyle(
+            "-fx-font-size: 14px;" +
+            "-fx-background-radius: 10;" +
+            "-fx-background-color: #4CAF50;" +
+            "-fx-text-fill: white;" +
+            "-fx-padding: 8 15 8 15;"
+        );
+        //TextArea output = new TextArea();
+        ListView<String> listView = new ListView<>();
+        listView.setPrefHeight(250);
+        listView.setStyle(
+            "-fx-background-color: white;" +
+            "-fx-border-color: lightgray;" +
+            "-fx-border-radius: 10;" +
+            "-fx-background-radius: 10;" +
+            "-fx-padding: 5;"
+        );
+
+        listView.setCellFactory(lv -> new javafx.scene.control.ListCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+
+                if (empty || item == null) {
+                    setText(null);
+                    setStyle("");
+                } else {
+                    setText(item);
+
+                    if (isSelected()) {
+                        // 🔥 ausgewählt (sichtbar machen)
+                        setStyle(
+                            "-fx-padding: 10;" +
+                            "-fx-background-radius: 8;" +
+                            "-fx-background-color: #2196F3;" +
+                            "-fx-text-fill: white;"
+                        );
+                    } else {
+                        // normal
+                        setStyle(
+                            "-fx-padding: 10;" +
+                            "-fx-background-radius: 8;" +
+                            "-fx-border-radius: 8;" +
+                            "-fx-border-color: #e0e0e0;" +
+                            "-fx-background-color: white;" +
+                            "-fx-text-fill: black;"
+                        );
+                    }
+                }
+            }
+        });
 
         Button addButton = new Button("Task hinzufügen");
 
         Button showTasksButton = new Button("Tasks anzeigen");
 
         Button deleteButton = new Button("Task löschen");
+
+        addButton.setStyle(buttonStyle);
+        showTasksButton.setStyle(buttonStyle);
+        deleteButton.setStyle(
+            "-fx-font-size: 14px;" +
+            "-fx-background-radius: 10;" +
+            "-fx-background-color: #e74c3c;" +
+            "-fx-text-fill: white;" +
+            "-fx-padding: 8 15 8 15;"
+        );
+
+        Label title = new Label("Study Planner");
+        title.setStyle("-fx-font-size: 20px; -fx-font-weight: bold;");
 
         button.setOnAction(e -> {
             // Demo Tasks (später aus Storage)
@@ -60,9 +138,13 @@ public class MainApp extends Application {
 
             // Fallback falls Storage leer
             if (tasks.isEmpty()) {
-                tasks = new ArrayList<>();
-                tasks.add(new Task("Mathe", LocalDate.now().plusDays(3), 5, 10));
-                tasks.add(new Task("Prog", LocalDate.now().plusDays(7), 3, 8));
+                listView.getItems().clear();
+                listView.getItems().add("Keine verfügbaren Tasks!");
+                return;
+
+                //tasks = new ArrayList<>();
+                //tasks.add(new Task("Mathe", LocalDate.now().plusDays(3), 5, 10));
+                //tasks.add(new Task("Prog", LocalDate.now().plusDays(7), 3, 8));
             }
 
             // Plan berechnen
@@ -70,13 +152,18 @@ public class MainApp extends Application {
             List<StudySession> plan = service.createPlan(tasks);
 
             // Ausgabe vorbereiten
-            StringBuilder sb = new StringBuilder();
-            for (StudySession session : plan) {
-                sb.append(session).append("\n");
-            }
+            //StringBuilder sb = new StringBuilder();
+            //for (StudySession session : plan) {
+            //    sb.append(session).append("\n");
+            //}
 
             // Text anzeigen
-            output.setText(sb.toString());
+            //output.setText(sb.toString());
+            listView.getItems().clear();
+
+            for (StudySession session : plan) {
+                listView.getItems().add(session.toString());
+            }
         });
 
         addButton.setOnAction(e -> {
@@ -94,7 +181,9 @@ public class MainApp extends Application {
                 tasks.add(newTask);
                 storage.saveTasks(tasks);
 
-                output.setText("Task gespeichert!");
+                //output.setText("Task gespeichert!");
+                listView.getItems().clear();
+                listView.getItems().add("Task gespeichert!");
 
                 // Felder leeren
                 nameField.clear();
@@ -103,7 +192,9 @@ public class MainApp extends Application {
                 hoursField.clear();
 
             } catch (Exception ex) {
-                output.setText("Fehler bei Eingabe!");
+                //output.setText("Fehler bei Eingabe!");
+                listView.getItems().clear();
+                listView.getItems().add("Fehler bei Eingabe!");
             }
         });
 
@@ -112,19 +203,16 @@ public class MainApp extends Application {
             StorageManager storage = new StorageManager();
             List<Task> tasks = storage.loadTasks();
 
+            listView.getItems().clear();
+
             if (tasks.isEmpty()) {
-                output.setText("Keine Tasks vorhanden.");
+                listView.getItems().add("Keine Tasks vorhanden.");
                 return;
             }
 
-            StringBuilder sb = new StringBuilder();
-            sb.append("--- TASKS ---\n");
-
             for (Task task : tasks) {
-                sb.append(task).append("\n");
+                listView.getItems().add(task.toString());
             }
-
-            output.setText(sb.toString());
         });
 
         deleteButton.setOnAction(e -> {
@@ -138,11 +226,19 @@ public class MainApp extends Application {
                 task.getName().equalsIgnoreCase(nameToDelete)
             );
 
+            listView.getItems().clear();
+
             if (removed) {
                 storage.saveTasks(tasks);
-                output.setText("Task gelöscht!");
+                //output.setText("Task gelöscht!");
+                listView.getItems().add("Task gelöscht!");
+                //listView.getItems().clear();
+                //for (Task task : tasks) {
+                //    listView.getItems().add(task.toString());
+                //}
             } else {
-                output.setText("Task nicht gefunden!");
+                //output.setText("Task nicht gefunden!");
+                listView.getItems().add("Task nicht gefunden!");
             }
 
             deleteField.clear();
@@ -167,9 +263,8 @@ public class MainApp extends Application {
                 button
         );
 
-        output.setPrefHeight(200);
-
         VBox root = new VBox(15,
+                title,
                 new Label("Task hinzufügen:"),
                 inputRow,
                 addButton,
@@ -181,10 +276,12 @@ public class MainApp extends Application {
                 buttonRow,
 
                 new Label("Ausgabe:"),
-                output
+                listView
         );
 
-        Scene scene = new Scene(root, 500, 450);
+        root.setStyle("-fx-padding: 20; -fx-background-color: #f5f5f5;");
+
+        Scene scene = new Scene(root, 500, 500);
 
         stage.setTitle("Study Planner");
         stage.setScene(scene);
