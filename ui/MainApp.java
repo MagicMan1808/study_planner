@@ -1,3 +1,7 @@
+// Kompilieren vom Ordner study_planner:
+// javac --module-path "C:\javafx-sdk-26\lib" --add-modules javafx.controls -sourcepath . ui/MainApp.java
+// java --module-path "C:\javafx-sdk-26\lib" --add-modules javafx.controls ui.MainApp
+
 package ui;
 
 import model.Task;
@@ -29,7 +33,7 @@ public class MainApp extends Application {
         nameField.setPromptText("Name");
 
         TextField deadlineField = new TextField();
-        deadlineField.setPromptText("Deadline (YYYY-MM-DD)");
+        deadlineField.setPromptText("YYYY-MM-DD");
 
         TextField difficultyField = new TextField();
         difficultyField.setPromptText("Difficulty (1-5)");
@@ -37,21 +41,19 @@ public class MainApp extends Application {
         TextField hoursField = new TextField();
         hoursField.setPromptText("Hours");
 
-        TextField deleteField = new TextField();
-        deleteField.setPromptText("Name zum Löschen");
+
 
         String fieldStyle = "-fx-font-size: 13px; -fx-background-radius: 8;";
 
         String buttonStyle = 
             "-fx-font-size: 14px;" +
-            "-fx-background-radius: 10" +
-            "-fx-padding: 8 15 8 15";
+            "-fx-background-radius: 10;" +
+            "-fx-padding: 8 15 8 15;";
 
         nameField.setStyle(fieldStyle);
         deadlineField.setStyle(fieldStyle);
         difficultyField.setStyle(fieldStyle);
         hoursField.setStyle(fieldStyle);
-        deleteField.setStyle(fieldStyle);
 
         Button button = new Button("Plan anzeigen");
 
@@ -91,6 +93,22 @@ public class MainApp extends Application {
                             "-fx-background-radius: 8;" +
                             "-fx-background-color: #2196F3;" +
                             "-fx-text-fill: white;"
+                        );
+                    } else if (item.startsWith("✅")) {
+                        setStyle(
+                            "-fx-padding: 10;" +
+                            "-fx-background-radius: 8;" +
+                            "-fx-background-color: #e8f5e9;" +
+                            "-fx-text-fill: #2e7d32;" +
+                            "-fx-font-weight: bold;"
+                        );
+                    } else if (item.startsWith("❌")) {
+                        setStyle(
+                            "-fx-padding: 10;" +
+                            "-fx-background-radius: 8;" +
+                            "-fx-background-color: #ffebee;" +
+                            "-fx-text-fill: #c62828;" +
+                            "-fx-font-weight: bold;"
                         );
                     } else {
                         // normal
@@ -139,7 +157,7 @@ public class MainApp extends Application {
             // Fallback falls Storage leer
             if (tasks.isEmpty()) {
                 listView.getItems().clear();
-                listView.getItems().add("Keine verfügbaren Tasks!");
+                listView.getItems().add("❌ Keine verfügbaren Tasks!");
                 return;
 
                 //tasks = new ArrayList<>();
@@ -183,7 +201,7 @@ public class MainApp extends Application {
 
                 //output.setText("Task gespeichert!");
                 listView.getItems().clear();
-                listView.getItems().add("Task gespeichert!");
+                listView.getItems().add("✅ Task gespeichert!");
 
                 // Felder leeren
                 nameField.clear();
@@ -194,7 +212,7 @@ public class MainApp extends Application {
             } catch (Exception ex) {
                 //output.setText("Fehler bei Eingabe!");
                 listView.getItems().clear();
-                listView.getItems().add("Fehler bei Eingabe!");
+                listView.getItems().add("❌ Fehler bei Eingabe!");
             }
         });
 
@@ -206,7 +224,7 @@ public class MainApp extends Application {
             listView.getItems().clear();
 
             if (tasks.isEmpty()) {
-                listView.getItems().add("Keine Tasks vorhanden.");
+                listView.getItems().add("❌ Keine Tasks vorhanden.");
                 return;
             }
 
@@ -217,31 +235,37 @@ public class MainApp extends Application {
 
         deleteButton.setOnAction(e -> {
 
-            String nameToDelete = deleteField.getText();
+            String selectedItem = listView.getSelectionModel().getSelectedItem();
+
+            if (selectedItem == null) {
+                listView.getItems().clear();
+                listView.getItems().add("❌ Bitte wähle einen Task aus!");
+                return;
+            }
 
             StorageManager storage = new StorageManager();
             List<Task> tasks = storage.loadTasks();
 
+            // Task angand des Strings finden
             boolean removed = tasks.removeIf(task ->
-                task.getName().equalsIgnoreCase(nameToDelete)
+                selectedItem.split(" \\| ")[0].equals(task.getName())
             );
 
             listView.getItems().clear();
 
             if (removed) {
                 storage.saveTasks(tasks);
-                //output.setText("Task gelöscht!");
-                listView.getItems().add("Task gelöscht!");
-                //listView.getItems().clear();
-                //for (Task task : tasks) {
-                //    listView.getItems().add(task.toString());
-                //}
-            } else {
-                //output.setText("Task nicht gefunden!");
-                listView.getItems().add("Task nicht gefunden!");
-            }
+                
+                listView.getItems().clear();
+                listView.getItems().add("✅ Task gelöscht!");
 
-            deleteField.clear();
+                for (Task task : tasks) {
+                    listView.getItems().add(task.toString());
+                }
+            } else {
+                listView.getItems().clear();
+                listView.getItems().add("❌ Fehler beim Löschen!");
+            }
         });
 
 
@@ -252,15 +276,11 @@ public class MainApp extends Application {
                 hoursField
         );
 
-        HBox deleteRow = new HBox(10,
-                deleteField,
-                deleteButton
-        );
-
         HBox buttonRow = new HBox(10,
                 addButton,
                 showTasksButton,
-                button
+                button,
+                deleteButton
         );
 
         VBox root = new VBox(15,
@@ -268,9 +288,6 @@ public class MainApp extends Application {
                 new Label("Task hinzufügen:"),
                 inputRow,
                 addButton,
-
-                new Label("Task löschen:"),
-                deleteRow,
 
                 new Label("Aktionen:"),
                 buttonRow,
