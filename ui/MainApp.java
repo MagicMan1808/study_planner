@@ -26,6 +26,14 @@ import javafx.scene.control.ListView;
 
 public class MainApp extends Application {
 
+    private void refreshTasks(ListView<Task> listView) {
+        StorageManager storage = new StorageManager();
+        List<Task> tasks = storage.loadTasks();
+
+        listView.getItems().clear();
+        listView.getItems().addAll(tasks);
+    }
+
     @Override
     public void start(Stage stage) {
 
@@ -43,17 +51,59 @@ public class MainApp extends Application {
 
 
 
-        String fieldStyle = "-fx-font-size: 13px; -fx-background-radius: 8;";
+        String fieldStyle = 
+            "-fx-font-size: 13px;" +
+            "-fx-background-radius: 8;" +
+            "-fx-background-color: #1e1e1e;" +
+            "-fx-text-fill: white;" +
+            "-fx-prompt-text-fill: #888;" +
+            "-fx-border-color: #333;" +
+            "-fx-border-radius: 8;" +
+            "-fx-padding: 8;";
 
         String buttonStyle = 
             "-fx-font-size: 14px;" +
             "-fx-background-radius: 10;" +
+            "-fx-background-color: #1f1f1f;" +
+            "-fx-text-fill: white;" +
             "-fx-padding: 8 15 8 15;";
 
         nameField.setStyle(fieldStyle);
         deadlineField.setStyle(fieldStyle);
         difficultyField.setStyle(fieldStyle);
         hoursField.setStyle(fieldStyle);
+
+        nameField.focusedProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal) {
+                nameField.setStyle(fieldStyle + "-fx-border-color: #2979ff;");
+            } else {
+                nameField.setStyle(fieldStyle);
+            }
+        });
+
+        deadlineField.focusedProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal) {
+                deadlineField.setStyle(fieldStyle + "-fx-border-color: #2979ff;");
+            } else {
+                deadlineField.setStyle(fieldStyle);
+            }
+        });
+
+        difficultyField.focusedProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal) {
+                difficultyField.setStyle(fieldStyle + "-fx-border-color: #2979ff;");
+            } else {
+                difficultyField.setStyle(fieldStyle);
+            }
+        });
+
+        hoursField.focusedProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal) {
+                hoursField.setStyle(fieldStyle + "-fx-border-color: #2979ff;");
+            } else {
+                hoursField.setStyle(fieldStyle);
+            }
+        });
 
         Button button = new Button("Plan anzeigen");
 
@@ -64,37 +114,66 @@ public class MainApp extends Application {
             "-fx-text-fill: white;" +
             "-fx-padding: 8 15 8 15;"
         );
+
+        button.setOnMouseEntered(e -> button.setStyle(
+            "-fx-font-size: 14px;" +
+            "-fx-background-radius: 10;" +
+            "-fx-background-color: #5ed662;" +
+            "-fx-text-fill: white;" +
+            "-fx-padding: 8 15 8 15;"
+        ));
+        button.setOnMouseExited(e -> button.setStyle(
+            "-fx-font-size: 14px;" +
+            "-fx-background-radius: 10;" +
+            "-fx-background-color: #4CAF50;" +
+            "-fx-text-fill: white;" +
+            "-fx-padding: 8 15 8 15;"
+        ));
         //TextArea output = new TextArea();
-        ListView<String> listView = new ListView<>();
-        listView.setPrefHeight(250);
+        ListView<Task> listView = new ListView<>();
+        listView.setPrefHeight(300);
         listView.setStyle(
-            "-fx-background-color: white;" +
-            "-fx-border-color: lightgray;" +
+            "-fx-background-color: #1e1e1e;" +
+            "-fx-control-inner-background: #1e1e1e;" +
+            "-fx-border-color: #333;" +
             "-fx-border-radius: 10;" +
+            "-fx-background-radius: 10;" +
+            "-fx-padding: 5;"
+        );
+
+        ListView<StudySession> planListView = new ListView<>();
+        planListView.setPrefHeight(300);
+
+        planListView.setStyle(
+            "-fx-background-color: #1e1e1e;" +
+            "-fx-control-inner-background: #1e1e1e;" +
+            "-fx-border-color: #333;" +
+            "-fx-border-radiius: 10;" +
             "-fx-background-radius: 10;" +
             "-fx-padding: 5;"
         );
 
         listView.setCellFactory(lv -> new javafx.scene.control.ListCell<>() {
             @Override
-            protected void updateItem(String item, boolean empty) {
+            protected void updateItem(Task item, boolean empty) {
                 super.updateItem(item, empty);
 
                 if (empty || item == null) {
                     setText(null);
                     setStyle("");
                 } else {
-                    setText(item);
+                    String text = item.toString();
+                    setText(text);
 
                     if (isSelected()) {
                         // 🔥 ausgewählt (sichtbar machen)
                         setStyle(
                             "-fx-padding: 10;" +
                             "-fx-background-radius: 8;" +
-                            "-fx-background-color: #2196F3;" +
+                            "-fx-background-color: #2979ff;" +
                             "-fx-text-fill: white;"
                         );
-                    } else if (item.startsWith("✅")) {
+                    } else if (text.startsWith("✅")) {
                         setStyle(
                             "-fx-padding: 10;" +
                             "-fx-background-radius: 8;" +
@@ -102,7 +181,7 @@ public class MainApp extends Application {
                             "-fx-text-fill: #2e7d32;" +
                             "-fx-font-weight: bold;"
                         );
-                    } else if (item.startsWith("❌")) {
+                    } else if (text.startsWith("❌")) {
                         setStyle(
                             "-fx-padding: 10;" +
                             "-fx-background-radius: 8;" +
@@ -116,9 +195,41 @@ public class MainApp extends Application {
                             "-fx-padding: 10;" +
                             "-fx-background-radius: 8;" +
                             "-fx-border-radius: 8;" +
-                            "-fx-border-color: #e0e0e0;" +
-                            "-fx-background-color: white;" +
-                            "-fx-text-fill: black;"
+                            "-fx-border-color: #333;" +
+                            "-fx-background-color: #1e1e1e;" +
+                            "-fx-text-fill: white;"
+                        );
+                    }
+                }
+            }
+        });
+
+        planListView.setCellFactory(lv -> new javafx.scene.control.ListCell<>() {
+            @Override
+            protected void updateItem(StudySession item, boolean empty) {
+                super.updateItem(item, empty);
+
+                if (empty || item == null) {
+                    setText(null);
+                    setStyle("");
+                } else {
+                    setText("📚 " + item.toString());
+
+                    if (isSelected()) {
+                        setStyle(
+                            "-fx-padding: 10;" +
+                            "-fx-background-radius: 8;" +
+                            "-fx-background-color: #2972ff;" +
+                            "-fx-text-fill: white;"
+                        );
+                    } else {
+                        setStyle(
+                            "-fx-padding: 10;" +
+                            "-fx-background-radius: 8;" +
+                            "-fx-background-color: #1e1e1e;" +
+                            "-fx-border-color: #333;" +
+                            "-fx-border-radius: 8;" + 
+                            "-fx-text-fill: white;"
                         );
                     }
                 }
@@ -127,7 +238,25 @@ public class MainApp extends Application {
 
         Button addButton = new Button("Task hinzufügen");
 
-        Button showTasksButton = new Button("Tasks anzeigen");
+        addButton.setOnMouseEntered(e -> addButton.setStyle(
+            "-fx-font-size: 14px;" +
+            "-fx-background-radius: 10;" +
+            "-fx-background-color: #333333;" +
+            "-fx-text-fill: white;" +
+            "-fx-padding: 8 15 8 15;"
+        ));
+        addButton.setOnMouseExited(e -> addButton.setStyle(buttonStyle));
+
+        Button showTasksButton = new Button("Tasks aktualisieren");
+
+        showTasksButton.setOnMouseEntered(e -> showTasksButton.setStyle(
+            "-fx-font-size: 14px;" +
+            "-fx-background-radius: 10;" +
+            "-fx-background-color: #333333;" +
+            "-fx-text-fill: white;" +
+            "-fx-padding: 8 15 8 15;"
+        ));
+        showTasksButton.setOnMouseExited(e -> showTasksButton.setStyle(buttonStyle));
 
         Button deleteButton = new Button("Task löschen");
 
@@ -136,13 +265,36 @@ public class MainApp extends Application {
         deleteButton.setStyle(
             "-fx-font-size: 14px;" +
             "-fx-background-radius: 10;" +
-            "-fx-background-color: #e74c3c;" +
+            "-fx-background-color: #c0392b;" +
             "-fx-text-fill: white;" +
             "-fx-padding: 8 15 8 15;"
         );
 
+        deleteButton.setOnMouseEntered(e -> deleteButton.setStyle(
+            "-fx-font-size: 14px;" +
+            "-fx-background-radius: 10;" +
+            "-fx-background-color: #e74c3c;" +
+            "-fx-text-fill: white;" +
+            "-fx-padding: 8 15 8 15;"
+        ));
+        deleteButton.setOnMouseExited(e -> deleteButton.setStyle(
+            "-fx-font-size: 14px;" +
+            "-fx-background-radius: 10;" +
+            "-fx-background-color: #c0392b;" +
+            "-fx-text-fill: white;" +
+            "-fx-padding: 8 15 8 15;"
+        ));
+
         Label title = new Label("Study Planner");
-        title.setStyle("-fx-font-size: 20px; -fx-font-weight: bold;");
+        title.setStyle("-fx-font-size: 25px; -fx-font-weight: bold; -fx-text-fill: white");
+
+        Label statusLabel = new Label();
+        statusLabel.setStyle(
+            "-fx-font-size: 13px;" +
+            "-fx-padding: 8;" +
+            "-fx-background-radius: 8;" +
+            "-fx-text-fill: white;"
+        );
 
         button.setOnAction(e -> {
             // Demo Tasks (später aus Storage)
@@ -151,13 +303,15 @@ public class MainApp extends Application {
             //tasks.add(new Task("Prog", LocalDate.now().plusDays(7), 3, 8));
             //tasks.add(new Task("GBS", LocalDate.now().plusDays(10), 2, 5));
 
+            statusLabel.setText("");
+            
             StorageManager storage = new StorageManager();
             List<Task> tasks = storage.loadTasks();
 
             // Fallback falls Storage leer
             if (tasks.isEmpty()) {
-                listView.getItems().clear();
-                listView.getItems().add("❌ Keine verfügbaren Tasks!");
+                planListView.getItems().clear();
+                statusLabel.setText("❌ Keine verfügbaren Tasks!");
                 return;
 
                 //tasks = new ArrayList<>();
@@ -177,10 +331,10 @@ public class MainApp extends Application {
 
             // Text anzeigen
             //output.setText(sb.toString());
-            listView.getItems().clear();
+            planListView.getItems().clear();
 
             for (StudySession session : plan) {
-                listView.getItems().add(session.toString());
+                planListView.getItems().add(session);
             }
         });
 
@@ -196,12 +350,21 @@ public class MainApp extends Application {
                 StorageManager storage = new StorageManager();
                 List<Task> tasks = storage.loadTasks();
 
+                boolean exists = tasks.stream()
+                    .anyMatch(t -> t.getName().equalsIgnoreCase(name));
+
+                if (exists) {
+                    statusLabel.setText("❌ Task mit diesem Namen existiert bereits!");
+                    return;
+                }
+
                 tasks.add(newTask);
                 storage.saveTasks(tasks);
 
                 //output.setText("Task gespeichert!");
-                listView.getItems().clear();
-                listView.getItems().add("✅ Task gespeichert!");
+
+                refreshTasks(listView);
+                statusLabel.setText("✅ Task gespeichert!");
 
                 // Felder leeren
                 nameField.clear();
@@ -211,60 +374,45 @@ public class MainApp extends Application {
 
             } catch (Exception ex) {
                 //output.setText("Fehler bei Eingabe!");
-                listView.getItems().clear();
-                listView.getItems().add("❌ Fehler bei Eingabe!");
+                statusLabel.setText("❌ Fehler bei Eingabe!");
             }
         });
 
         showTasksButton.setOnAction(e -> {
 
-            StorageManager storage = new StorageManager();
-            List<Task> tasks = storage.loadTasks();
+            refreshTasks(listView);
 
-            listView.getItems().clear();
-
-            if (tasks.isEmpty()) {
-                listView.getItems().add("❌ Keine Tasks vorhanden.");
+            if (listView.getItems().isEmpty()) {
+                statusLabel.setText("❌ Keine Tasks vorhanden.");
                 return;
-            }
-
-            for (Task task : tasks) {
-                listView.getItems().add(task.toString());
             }
         });
 
         deleteButton.setOnAction(e -> {
 
-            String selectedItem = listView.getSelectionModel().getSelectedItem();
+            Task selectedTask = listView.getSelectionModel().getSelectedItem();
 
-            if (selectedItem == null) {
-                listView.getItems().clear();
-                listView.getItems().add("❌ Bitte wähle einen Task aus!");
+            if (selectedTask == null) {
+                statusLabel.setText("❌ Bitte wähle einen Task aus!");
                 return;
             }
 
             StorageManager storage = new StorageManager();
             List<Task> tasks = storage.loadTasks();
 
-            // Task angand des Strings finden
-            boolean removed = tasks.removeIf(task ->
-                selectedItem.split(" \\| ")[0].equals(task.getName())
+            boolean removed = tasks.removeIf(t ->
+                t.getName().equals(selectedTask.getName()) &&
+                t.getDeadline().equals(selectedTask.getDeadline())
             );
-
-            listView.getItems().clear();
 
             if (removed) {
                 storage.saveTasks(tasks);
-                
-                listView.getItems().clear();
-                listView.getItems().add("✅ Task gelöscht!");
 
-                for (Task task : tasks) {
-                    listView.getItems().add(task.toString());
-                }
+                refreshTasks(listView);
+
+                statusLabel.setText("✅ Task gelöscht!");
             } else {
-                listView.getItems().clear();
-                listView.getItems().add("❌ Fehler beim Löschen!");
+                statusLabel.setText("❌ Fehler beim Löschen!");
             }
         });
 
@@ -277,32 +425,56 @@ public class MainApp extends Application {
         );
 
         HBox buttonRow = new HBox(10,
-                addButton,
                 showTasksButton,
                 button,
                 deleteButton
         );
 
-        VBox root = new VBox(15,
-                title,
-                new Label("Task hinzufügen:"),
-                inputRow,
-                addButton,
-
-                new Label("Aktionen:"),
-                buttonRow,
-
-                new Label("Ausgabe:"),
-                listView
+        VBox inputCard = new VBox(10, inputRow, addButton);
+        inputCard.setStyle(
+            "-fx-background-color: #2d2d2d;" +
+            "-fx-padding: 15;" +
+            "-fx-background-radius: 10;"
         );
 
-        root.setStyle("-fx-padding: 20; -fx-background-color: #f5f5f5;");
+        Label taskLabel = new Label("Task hinzufügen:");
+        taskLabel.setStyle("-fx-text-fill: #bbbbbb;");
 
-        Scene scene = new Scene(root, 500, 500);
+        Label actionLabel = new Label("Aktionen:");
+        actionLabel.setStyle("-fx-text-fill: #bbbbbb;");
+
+        Label tasksLabel = new Label("Tasks:");
+        tasksLabel.setStyle("-fx-text-fill: #bbbbbb;");
+
+        Label planLabel = new Label("Lernplan:");
+        planLabel.setStyle("-fx-text-fill: #bbbbbb;");
+
+        VBox root = new VBox(15,
+                title,
+                statusLabel,
+                taskLabel,
+                inputCard,
+
+                actionLabel,
+                buttonRow,
+
+                tasksLabel,
+                listView,
+
+                planLabel,
+                planListView
+        );
+
+        root.setStyle("-fx-padding: 20; -fx-background-color: #121212;");
+
+        Scene scene = new Scene(root, 500, 700);
+
+        scene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
 
         stage.setTitle("Study Planner");
         stage.setScene(scene);
         stage.show();
+        refreshTasks(listView);
     }
 
     public static void main(String[] args) {
