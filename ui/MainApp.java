@@ -11,6 +11,7 @@ import planner.PlanningService;
 import storage.StorageManager;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import javafx.application.Application;
@@ -41,7 +42,7 @@ public class MainApp extends Application {
         nameField.setPromptText("Name");
 
         TextField deadlineField = new TextField();
-        deadlineField.setPromptText("YYYY-MM-DD");
+        deadlineField.setPromptText("DD.MM.YYYY");
 
         TextField difficultyField = new TextField();
         difficultyField.setPromptText("Difficulty (1-5)");
@@ -64,7 +65,7 @@ public class MainApp extends Application {
         String buttonStyle = 
             "-fx-font-size: 14px;" +
             "-fx-background-radius: 10;" +
-            "-fx-background-color: #1f1f1f;" +
+            "-fx-background-color: #2e2e2e;" +
             "-fx-text-fill: white;" +
             "-fx-padding: 8 15 8 15;";
 
@@ -135,7 +136,7 @@ public class MainApp extends Application {
         listView.setStyle(
             "-fx-background-color: #1e1e1e;" +
             "-fx-control-inner-background: #1e1e1e;" +
-            "-fx-border-color: #333;" +
+            "-fx-border-color: transparent;" +
             "-fx-border-radius: 10;" +
             "-fx-background-radius: 10;" +
             "-fx-padding: 5;"
@@ -147,8 +148,8 @@ public class MainApp extends Application {
         planListView.setStyle(
             "-fx-background-color: #1e1e1e;" +
             "-fx-control-inner-background: #1e1e1e;" +
-            "-fx-border-color: #333;" +
-            "-fx-border-radiius: 10;" +
+            "-fx-border-color: transparent;" +
+            "-fx-border-radius: 10;" +
             "-fx-background-radius: 10;" +
             "-fx-padding: 5;"
         );
@@ -247,21 +248,21 @@ public class MainApp extends Application {
         ));
         addButton.setOnMouseExited(e -> addButton.setStyle(buttonStyle));
 
-        Button showTasksButton = new Button("Tasks aktualisieren");
+        Button refreshTasksButton = new Button("Tasks aktualisieren");
 
-        showTasksButton.setOnMouseEntered(e -> showTasksButton.setStyle(
+        refreshTasksButton.setOnMouseEntered(e -> refreshTasksButton.setStyle(
             "-fx-font-size: 14px;" +
             "-fx-background-radius: 10;" +
             "-fx-background-color: #333333;" +
             "-fx-text-fill: white;" +
             "-fx-padding: 8 15 8 15;"
         ));
-        showTasksButton.setOnMouseExited(e -> showTasksButton.setStyle(buttonStyle));
+        refreshTasksButton.setOnMouseExited(e -> refreshTasksButton.setStyle(buttonStyle));
 
         Button deleteButton = new Button("Task löschen");
 
         addButton.setStyle(buttonStyle);
-        showTasksButton.setStyle(buttonStyle);
+        refreshTasksButton.setStyle(buttonStyle);
         deleteButton.setStyle(
             "-fx-font-size: 14px;" +
             "-fx-background-radius: 10;" +
@@ -339,9 +340,10 @@ public class MainApp extends Application {
         });
 
         addButton.setOnAction(e -> {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
             try {
                 String name = nameField.getText();
-                LocalDate deadline = LocalDate.parse(deadlineField.getText());
+                LocalDate deadline = LocalDate.parse(deadlineField.getText(), formatter);
                 int difficulty = Integer.parseInt(difficultyField.getText());
                 int hours = Integer.parseInt(hoursField.getText());
 
@@ -363,7 +365,7 @@ public class MainApp extends Application {
 
                 //output.setText("Task gespeichert!");
 
-                refreshTasks(listView);
+                //refreshTasks(listView);
                 statusLabel.setText("✅ Task gespeichert!");
 
                 // Felder leeren
@@ -374,11 +376,11 @@ public class MainApp extends Application {
 
             } catch (Exception ex) {
                 //output.setText("Fehler bei Eingabe!");
-                statusLabel.setText("❌ Fehler bei Eingabe!");
+                statusLabel.setText("❌ Datum muss Format DD.MM.YYYY haben!");
             }
         });
 
-        showTasksButton.setOnAction(e -> {
+        refreshTasksButton.setOnAction(e -> {
 
             refreshTasks(listView);
 
@@ -425,14 +427,14 @@ public class MainApp extends Application {
         );
 
         HBox buttonRow = new HBox(10,
-                showTasksButton,
+                refreshTasksButton,
                 button,
                 deleteButton
         );
 
         VBox inputCard = new VBox(10, inputRow, addButton);
         inputCard.setStyle(
-            "-fx-background-color: #2d2d2d;" +
+            "-fx-background-color: #1e1e1e;" +
             "-fx-padding: 15;" +
             "-fx-background-radius: 10;"
         );
