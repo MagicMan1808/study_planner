@@ -12,7 +12,7 @@ import storage.StorageManager;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
+//import java.util.ArrayList;
 import java.util.List;
 import javafx.application.Application;
 import javafx.scene.Scene;
@@ -37,6 +37,8 @@ public class MainApp extends Application {
 
     @Override
     public void start(Stage stage) {
+
+        final Task[] selectedTaskRef = new Task[1];
 
         TextField nameField = new TextField();
         nameField.setPromptText("Name");
@@ -106,9 +108,9 @@ public class MainApp extends Application {
             }
         });
 
-        Button button = new Button("Plan anzeigen");
+        Button planbutton = new Button("Plan anzeigen");
 
-        button.setStyle(
+        planbutton.setStyle(
             "-fx-font-size: 14px;" +
             "-fx-background-radius: 10;" +
             "-fx-background-color: #4CAF50;" +
@@ -116,14 +118,14 @@ public class MainApp extends Application {
             "-fx-padding: 8 15 8 15;"
         );
 
-        button.setOnMouseEntered(e -> button.setStyle(
+        planbutton.setOnMouseEntered(e -> planbutton.setStyle(
             "-fx-font-size: 14px;" +
             "-fx-background-radius: 10;" +
             "-fx-background-color: #5ed662;" +
             "-fx-text-fill: white;" +
             "-fx-padding: 8 15 8 15;"
         ));
-        button.setOnMouseExited(e -> button.setStyle(
+        planbutton.setOnMouseExited(e -> planbutton.setStyle(
             "-fx-font-size: 14px;" +
             "-fx-background-radius: 10;" +
             "-fx-background-color: #4CAF50;" +
@@ -286,6 +288,18 @@ public class MainApp extends Application {
             "-fx-padding: 8 15 8 15;"
         ));
 
+        Button editButton = new Button("Task bearbeiten");
+        editButton.setStyle(buttonStyle);
+
+        editButton.setOnMouseEntered(e -> editButton.setStyle(
+            "-fx-font-size: 14px;" +
+            "-fx-background-radius: 10;" +
+            "-fx-background-color: #333333;" +
+            "-fx-text-fill: white;" +
+            "-fx-padding: 8 15 8 15;"
+        ));
+        editButton.setOnMouseExited(e -> editButton.setStyle(buttonStyle));
+
         Label title = new Label("Study Planner");
         title.setStyle("-fx-font-size: 25px; -fx-font-weight: bold; -fx-text-fill: white");
 
@@ -297,7 +311,28 @@ public class MainApp extends Application {
             "-fx-text-fill: white;"
         );
 
-        button.setOnAction(e -> {
+        editButton.setOnAction(e -> {
+            Task selected = listView.getSelectionModel().getSelectedItem();
+
+            if (selected == null) {
+                statusLabel.setText("❌ Bitte wähle einen Task aus!");
+                return;
+            }
+
+            selectedTaskRef[0] = selected;
+
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+
+            nameField.setText(selected.getName());
+            deadlineField.setText(selected.getDeadline().format(formatter));
+            difficultyField.setText(String.valueOf(selected.getDifficulty()));
+            hoursField.setText(String.valueOf(selected.getEstimatedHours()));
+
+            addButton.setText("Task aktualisieren");
+            statusLabel.setText("✏️ Bearbeite Task...");
+        });
+
+        planbutton.setOnAction(e -> {
             // Demo Tasks (später aus Storage)
             //List<Task> tasks = new ArrayList<>();
             //tasks.add(new Task("Mathe", LocalDate.now().plusDays(3), 5, 10));
@@ -340,44 +375,62 @@ public class MainApp extends Application {
         });
 
         addButton.setOnAction(e -> {
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
-            try {
-                String name = nameField.getText();
-                LocalDate deadline = LocalDate.parse(deadlineField.getText(), formatter);
-                int difficulty = Integer.parseInt(difficultyField.getText());
-                int hours = Integer.parseInt(hoursField.getText());
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+                
+                try {
+                    String name = nameField.getText();
+                    LocalDate deadline = LocalDate.parse(deadlineField.getText(), formatter);
+                    int difficulty = Integer.parseInt(difficultyField.getText());
+                    int hours = Integer.parseInt(hoursField.getText());
 
-                Task newTask = new Task(name, deadline, difficulty, hours);
+                    Task newTask = new Task(name, deadline, difficulty, hours);
 
-                StorageManager storage = new StorageManager();
-                List<Task> tasks = storage.loadTasks();
+                    StorageManager storage = new StorageManager();
+                    List<Task> tasks = storage.loadTasks();
 
-                boolean exists = tasks.stream()
-                    .anyMatch(t -> t.getName().equalsIgnoreCase(name));
+                    if (selectedTaskRef[0] != null) {
+                        // Edit mode
+                        Task oldTask = selectedTaskRef[0];
 
-                if (exists) {
-                    statusLabel.setText("❌ Task mit diesem Namen existiert bereits!");
-                    return;
+                        tasks.removeIf(t ->
+                            t.getName().equals(oldTask.getName()) &&
+                            t.getDeadline().equals(oldTask.getDeadline())
+                        );
+
+                        tasks.add(newTask);
+
+                        statusLabel.setText("✏️ Task aktualisiert!");
+
+                    } else {
+                        boolean exists = tasks.stream()
+                            .anyMatch(t -> t.getName().equalsIgnoreCase(name));
+
+                        if (exists) {
+                            statusLabel.setText("❌ Task mit diesem Namen existiert bereits!");
+                            return;
+                        }
+
+                        tasks.add(newTask);
+                        statusLabel.setText("✅ Task gespeichert!");
+                    }
+
+                    storage.saveTasks(tasks);
+                    refreshTasks(listView);
+                    
+
+                    // Felder leeren
+                    nameField.clear();
+                    deadlineField.clear();
+                    difficultyField.clear();
+                    hoursField.clear();
+
+                    selectedTaskRef[0] = null;
+                    addButton.setText("Task hinzufügen");
+
+                } catch (Exception ex) {
+                    //output.setText("Fehler bei Eingabe!");
+                    statusLabel.setText("❌ Datum muss Format DD.MM.YYYY haben!");
                 }
-
-                tasks.add(newTask);
-                storage.saveTasks(tasks);
-
-                //output.setText("Task gespeichert!");
-
-                //refreshTasks(listView);
-                statusLabel.setText("✅ Task gespeichert!");
-
-                // Felder leeren
-                nameField.clear();
-                deadlineField.clear();
-                difficultyField.clear();
-                hoursField.clear();
-
-            } catch (Exception ex) {
-                //output.setText("Fehler bei Eingabe!");
-                statusLabel.setText("❌ Datum muss Format DD.MM.YYYY haben!");
-            }
         });
 
         refreshTasksButton.setOnAction(e -> {
@@ -427,8 +480,9 @@ public class MainApp extends Application {
         );
 
         HBox buttonRow = new HBox(10,
-                refreshTasksButton,
-                button,
+                //refreshTasksButton,
+                editButton,
+                planbutton,
                 deleteButton
         );
 
@@ -469,7 +523,7 @@ public class MainApp extends Application {
 
         root.setStyle("-fx-padding: 20; -fx-background-color: #121212;");
 
-        Scene scene = new Scene(root, 500, 700);
+        Scene scene = new Scene(root, 600, 700);
 
         scene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
 
