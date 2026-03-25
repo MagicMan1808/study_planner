@@ -5,6 +5,7 @@ import model.Task;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class StorageManager {
     
@@ -14,7 +15,7 @@ public class StorageManager {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH))) {
             
             for (Task task : tasks) {
-                String line = task.getName() + ";" + task.getDeadline() + ";" + task.getDifficulty() + ";" + task.getEstimatedHours();
+                String line = task.getId() + ";" + task.getName() + ";" + task.getDeadline() + ";" + task.getDifficulty() + ";" + task.getEstimatedHours();
 
                 writer.write(line);
                 writer.newLine();
@@ -34,12 +35,13 @@ public class StorageManager {
 
                 String[] parts = line.split(";");
 
-                String name = parts[0];
-                java.time.LocalDate deadline = java.time.LocalDate.parse(parts[1]);
-                int difficulty = Integer.parseInt(parts[2]);
-                int hours = Integer.parseInt(parts[3]);
+                UUID id = UUID.fromString(parts[0]);
+                String name = parts[1];
+                java.time.LocalDate deadline = java.time.LocalDate.parse(parts[2]);
+                int difficulty = Integer.parseInt(parts[3]);
+                int hours = Integer.parseInt(parts[4]);
 
-                tasks.add(new Task(name, deadline, difficulty, hours));
+                tasks.add(new Task(id, name, deadline, difficulty, hours));
             }
         
         } catch (IOException e) {

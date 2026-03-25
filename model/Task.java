@@ -1,9 +1,11 @@
 package model;
 
 import java.time.LocalDate;
+import java.util.UUID;
 
 public class Task {
     
+    private UUID id;
     private String name;
     private LocalDate deadline;
     private int difficulty;
@@ -12,10 +14,23 @@ public class Task {
     // private int progress;       // Fortschritt (in %)
 
     public Task(String name, LocalDate deadline, int difficulty, int estimatedHours) {
+        this.id = UUID.randomUUID();
         this.name = name;
         this.deadline = deadline;
         this.difficulty = difficulty;
         this.estimatedHours = estimatedHours; // benötigte Zeit
+    }
+
+    public Task(UUID id, String name, LocalDate deadline, int difficulty, int estimatedHours) {
+        this.id = id;
+        this.name = name;
+        this.deadline = deadline;
+        this.difficulty = difficulty;
+        this.estimatedHours = estimatedHours; // benötigte Zeit
+    }
+
+    public UUID getId() {
+        return id;
     }
 
     public String getName() {

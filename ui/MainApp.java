@@ -35,6 +35,28 @@ public class MainApp extends Application {
         listView.getItems().addAll(tasks);
     }
 
+    private void showSuccess(Label label, String message) {
+        label.setText(message);
+        label.setStyle(
+            "-fx-padding: 10;" +
+            "-fx-background-radius: 8;" +
+            "-fx-background-color: #e8f5e9;" +
+            "-fx-text-fill: #2e7d32;" +
+            "-fx-font-weight: bold;"
+        );
+    }
+
+    private void showError(Label label, String message) {
+        label.setText(message);
+        label.setStyle(
+            "-fx-padding: 10;" +
+            "-fx-background-radius: 8;" +
+            "-fx-background-color: #ffebee;" +
+            "-fx-text-fill: #c62828;" +
+            "-fx-font-weight: bold;"
+        );
+    }
+
     @Override
     public void start(Stage stage) {
 
@@ -176,6 +198,14 @@ public class MainApp extends Application {
                             "-fx-background-color: #2979ff;" +
                             "-fx-text-fill: white;"
                         );
+                    } else if (item.getDeadline().isBefore(LocalDate.now())) {
+                        setStyle(
+                            "-fx-padding: 10;" +
+                            "-fx-background-radius: 8;" +
+                            "-fx-border-radius: 8;" +
+                            "-fx-background-color: #3a1e1e;" +
+                            "-fx-text-fill: #f80707;"
+                        );
                     } else if (text.startsWith("✅")) {
                         setStyle(
                             "-fx-padding: 10;" +
@@ -315,7 +345,7 @@ public class MainApp extends Application {
             Task selected = listView.getSelectionModel().getSelectedItem();
 
             if (selected == null) {
-                statusLabel.setText("❌ Bitte wähle einen Task aus!");
+                showError(statusLabel, "❌ Bitte wähle einen Task aus!");
                 return;
             }
 
@@ -330,6 +360,13 @@ public class MainApp extends Application {
 
             addButton.setText("Task aktualisieren");
             statusLabel.setText("✏️ Bearbeite Task...");
+            statusLabel.setStyle(
+                "-fx-padding: 10;" +
+                "-fx-background-radius: 8;" +
+                "-fx-background-color: #e3f2fd;" +
+                "-fx-text-fill: #1565c0;" +
+                "-fx-font-weight: bold;"
+            );
         });
 
         planbutton.setOnAction(e -> {
@@ -340,6 +377,8 @@ public class MainApp extends Application {
             //tasks.add(new Task("GBS", LocalDate.now().plusDays(10), 2, 5));
 
             statusLabel.setText("");
+            statusLabel.setStyle("");
+            
             
             StorageManager storage = new StorageManager();
             List<Task> tasks = storage.loadTasks();
@@ -347,12 +386,26 @@ public class MainApp extends Application {
             // Fallback falls Storage leer
             if (tasks.isEmpty()) {
                 planListView.getItems().clear();
-                statusLabel.setText("❌ Keine verfügbaren Tasks!");
+                showError(statusLabel, "❌ Keine verfügbaren Tasks!");
                 return;
 
                 //tasks = new ArrayList<>();
                 //tasks.add(new Task("Mathe", LocalDate.now().plusDays(3), 5, 10));
                 //tasks.add(new Task("Prog", LocalDate.now().plusDays(7), 3, 8));
+            }
+
+            boolean hasExpired = tasks.stream()
+                .anyMatch(t -> t.getDeadline().isBefore(LocalDate.now()));
+
+            if (hasExpired) {
+                statusLabel.setText("⚠️ Einige Tasks sind bereits abgelaufen!");
+                statusLabel.setStyle(
+                    "-fx-padding: 10;" +
+                    "-fx-background-radius: 8;" +
+                    "-fx-background-color: #fff3cd;" +
+                    "-fx-text-fill: #856404;" +
+                    "-fx-font-weight: bold;"
+                );
             }
 
             // Plan berechnen
@@ -375,6 +428,7 @@ public class MainApp extends Application {
         });
 
         addButton.setOnAction(e -> {
+            
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
                 
                 try {
@@ -383,7 +437,21 @@ public class MainApp extends Application {
                     int difficulty = Integer.parseInt(difficultyField.getText());
                     int hours = Integer.parseInt(hoursField.getText());
 
-                    Task newTask = new Task(name, deadline, difficulty, hours);
+                    Task newTask;
+
+                    if (selectedTaskRef[0] != null) {
+                        // EDIT → gleiche ID behalten
+                        newTask = new Task(
+                            selectedTaskRef[0].getId(),
+                            name,
+                            deadline,
+                            difficulty,
+                            hours
+                        );
+                    } else {
+                        // NEU → neue UUID
+                        newTask = new Task(name, deadline, difficulty, hours);
+                    }
 
                     StorageManager storage = new StorageManager();
                     List<Task> tasks = storage.loadTasks();
@@ -392,26 +460,35 @@ public class MainApp extends Application {
                         // Edit mode
                         Task oldTask = selectedTaskRef[0];
 
-                        tasks.removeIf(t ->
-                            t.getName().equals(oldTask.getName()) &&
-                            t.getDeadline().equals(oldTask.getDeadline())
-                        );
+                        boolean exists = tasks.stream()
+                            .anyMatch(t ->
+                                t.getName().equalsIgnoreCase(name) &&
+                                !t.getId().equals(oldTask.getId())
+                            );
+
+                        if (exists) {
+                            showError(statusLabel, "❌ Task mit diesem Namen existiert bereits!");
+                            return;
+                        }
+
+                        tasks.removeIf(t -> t.getId().equals(oldTask.getId()));
 
                         tasks.add(newTask);
 
-                        statusLabel.setText("✏️ Task aktualisiert!");
+                        showSuccess(statusLabel, "✏️ Task aktualisiert!");
 
                     } else {
+
                         boolean exists = tasks.stream()
                             .anyMatch(t -> t.getName().equalsIgnoreCase(name));
 
                         if (exists) {
-                            statusLabel.setText("❌ Task mit diesem Namen existiert bereits!");
+                            showError(statusLabel, "❌ Task mit diesem Namen existiert bereits!");
                             return;
                         }
 
                         tasks.add(newTask);
-                        statusLabel.setText("✅ Task gespeichert!");
+                        showSuccess(statusLabel, "✅ Task gespeichert!");
                     }
 
                     storage.saveTasks(tasks);
@@ -429,7 +506,7 @@ public class MainApp extends Application {
 
                 } catch (Exception ex) {
                     //output.setText("Fehler bei Eingabe!");
-                    statusLabel.setText("❌ Datum muss Format DD.MM.YYYY haben!");
+                    showError(statusLabel, "❌ Datum muss Format DD.MM.YYYY haben!");
                 }
         });
 
@@ -438,8 +515,10 @@ public class MainApp extends Application {
             refreshTasks(listView);
 
             if (listView.getItems().isEmpty()) {
-                statusLabel.setText("❌ Keine Tasks vorhanden.");
+                showError(statusLabel, "❌ Keine Tasks vorhanden.");
                 return;
+            } else {
+                showSuccess(statusLabel, "✅ Tasks aktualisiert!");
             }
         });
 
@@ -448,7 +527,7 @@ public class MainApp extends Application {
             Task selectedTask = listView.getSelectionModel().getSelectedItem();
 
             if (selectedTask == null) {
-                statusLabel.setText("❌ Bitte wähle einen Task aus!");
+                showError(statusLabel, "❌ Bitte wähle einen Task aus!");
                 return;
             }
 
@@ -456,8 +535,7 @@ public class MainApp extends Application {
             List<Task> tasks = storage.loadTasks();
 
             boolean removed = tasks.removeIf(t ->
-                t.getName().equals(selectedTask.getName()) &&
-                t.getDeadline().equals(selectedTask.getDeadline())
+                t.getId().equals(selectedTask.getId())
             );
 
             if (removed) {
@@ -465,9 +543,17 @@ public class MainApp extends Application {
 
                 refreshTasks(listView);
 
-                statusLabel.setText("✅ Task gelöscht!");
+                showSuccess(statusLabel, "✅ Task gelöscht!");
+
+                 selectedTaskRef[0] = null;
+                 nameField.clear();
+                 deadlineField.clear();
+                 difficultyField.clear();
+                 hoursField.clear();
+                addButton.setText("Task hinzufügen");
+
             } else {
-                statusLabel.setText("❌ Fehler beim Löschen!");
+                showError(statusLabel, "❌ Fehler beim Löschen!");
             }
         });
 
@@ -480,7 +566,7 @@ public class MainApp extends Application {
         );
 
         HBox buttonRow = new HBox(10,
-                //refreshTasksButton,
+                refreshTasksButton,
                 editButton,
                 planbutton,
                 deleteButton
