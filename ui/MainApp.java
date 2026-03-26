@@ -609,6 +609,13 @@ public class MainApp extends Application {
 
         root.setStyle("-fx-padding: 20; -fx-background-color: #121212;");
 
+        root.setOnMouseClicked(e -> {
+            root.requestFocus();
+           
+            listView.getSelectionModel().clearSelection();
+            planListView.getSelectionModel().clearSelection();
+        });
+
         Scene scene = new Scene(root, 600, 700);
 
         scene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
