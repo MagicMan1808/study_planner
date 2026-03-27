@@ -7,17 +7,14 @@ package ui;
 import model.Task;
 import model.StudySession;
 import planner.PlanningService;
-//import planner.StudyPlannerAlgorithm;
 import storage.StorageManager;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-//import java.util.ArrayList;
 import java.util.List;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
-//import javafx.scene.control.TextArea;
 import javafx.scene.layout.VBox;
 import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
@@ -154,7 +151,7 @@ public class MainApp extends Application {
             "-fx-text-fill: white;" +
             "-fx-padding: 8 15 8 15;"
         ));
-        //TextArea output = new TextArea();
+
         ListView<Task> listView = new ListView<>();
         listView.setPrefHeight(300);
         listView.setStyle(
@@ -191,7 +188,7 @@ public class MainApp extends Application {
                     setText(text);
 
                     if (isSelected()) {
-                        // 🔥 ausgewählt (sichtbar machen)
+                        // ausgewählt
                         setStyle(
                             "-fx-padding: 10;" +
                             "-fx-background-radius: 8;" +
@@ -370,12 +367,6 @@ public class MainApp extends Application {
         });
 
         planbutton.setOnAction(e -> {
-            // Demo Tasks (später aus Storage)
-            //List<Task> tasks = new ArrayList<>();
-            //tasks.add(new Task("Mathe", LocalDate.now().plusDays(3), 5, 10));
-            //tasks.add(new Task("Prog", LocalDate.now().plusDays(7), 3, 8));
-            //tasks.add(new Task("GBS", LocalDate.now().plusDays(10), 2, 5));
-
             statusLabel.setText("");
             statusLabel.setStyle("");
             
@@ -388,10 +379,6 @@ public class MainApp extends Application {
                 planListView.getItems().clear();
                 showError(statusLabel, "❌ Keine verfügbaren Tasks!");
                 return;
-
-                //tasks = new ArrayList<>();
-                //tasks.add(new Task("Mathe", LocalDate.now().plusDays(3), 5, 10));
-                //tasks.add(new Task("Prog", LocalDate.now().plusDays(7), 3, 8));
             }
 
             boolean hasExpired = tasks.stream()
@@ -411,15 +398,6 @@ public class MainApp extends Application {
             // Plan berechnen
             PlanningService service = new PlanningService();
             List<StudySession> plan = service.createPlan(tasks);
-
-            // Ausgabe vorbereiten
-            //StringBuilder sb = new StringBuilder();
-            //for (StudySession session : plan) {
-            //    sb.append(session).append("\n");
-            //}
-
-            // Text anzeigen
-            //output.setText(sb.toString());
             planListView.getItems().clear();
 
             for (StudySession session : plan) {
@@ -440,7 +418,7 @@ public class MainApp extends Application {
                     Task newTask;
 
                     if (selectedTaskRef[0] != null) {
-                        // EDIT → gleiche ID behalten
+                        // EDIT -> gleiche ID behalten
                         newTask = new Task(
                             selectedTaskRef[0].getId(),
                             name,
@@ -449,7 +427,7 @@ public class MainApp extends Application {
                             hours
                         );
                     } else {
-                        // NEU → neue UUID
+                        // NEU -> neue UUID
                         newTask = new Task(name, deadline, difficulty, hours);
                     }
 
@@ -505,7 +483,6 @@ public class MainApp extends Application {
                     addButton.setText("Task hinzufügen");
 
                 } catch (Exception ex) {
-                    //output.setText("Fehler bei Eingabe!");
                     showError(statusLabel, "❌ Datum muss Format DD.MM.YYYY haben!");
                 }
         });

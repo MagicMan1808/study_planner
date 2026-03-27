@@ -10,8 +10,6 @@ public class Task {
     private LocalDate deadline;
     private int difficulty;
     private int estimatedHours;
-    // private boolean status;     // Status (Fertig / Offen)
-    // private int progress;       // Fortschritt (in %)
 
     public Task(String name, LocalDate deadline, int difficulty, int estimatedHours) {
         this.id = UUID.randomUUID();

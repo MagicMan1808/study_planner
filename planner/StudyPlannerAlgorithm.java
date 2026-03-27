@@ -12,7 +12,6 @@ import java.util.Map;
 public class StudyPlannerAlgorithm {
 
     private static final int MAX_PLANNING_DAYS = 90;
-    private static final int MIN_DAYS_BEFORE_START = 7;
     private static final double URGENCY_THRESHOLD = 0.3;
 
     private double calculatePriority(Task task, LocalDate today) {
@@ -77,8 +76,6 @@ public class StudyPlannerAlgorithm {
         LocalDate today = LocalDate.now();
 
         for (Task task : tasks) {
-            long daysLeft = ChronoUnit.DAYS.between(today, task.getDeadline());
-
             int baseStart = 7;
             int extra = task.getEstimatedHours() / 5;
             int startOffset = Math.min(14, baseStart + extra); // 7-14 Tage vor der Klausur starten
@@ -98,7 +95,6 @@ public class StudyPlannerAlgorithm {
             List<Task> activeTasks = new ArrayList<>();
             for (Task  task : tasks) {
                 LocalDate startDate = startDates.get(task);
-                LocalDate planEnd = today.plusDays(MAX_PLANNING_DAYS);
                 if (!task.getDeadline().isBefore(currentDate) &&
                     !currentDate.isBefore(startDate)) {
 

@@ -7,7 +7,6 @@ public class StudySession {
     private LocalDate date;
     private String subject;
     private int duration;
-    // private boolean completed; (Fortschritt)
 
     public StudySession(LocalDate date, String subject, int duration) {
         this.date = date;
