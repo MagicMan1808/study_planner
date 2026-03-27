@@ -1,5 +1,5 @@
 // Kompilieren vom Ordner study_planner:
-// javac --module-path "C:\javafx-sdk-26\lib" --add-modules javafx.controls -sourcepath . ui/MainApp.java
+// javac --module-path "C:\javafx-sdk-26\lib" --add-modules javafx.controls -sourcepath . planner/*.java model/*.java storage/*.java ui/*.java
 // java --module-path "C:\javafx-sdk-26\lib" --add-modules javafx.controls ui.MainApp
 
 package ui;
