@@ -14,21 +14,6 @@ public class StudyPlannerAlgorithm {
     private static final int MAX_PLANNING_DAYS = 90;
     private static final double URGENCY_THRESHOLD = 0.3;
 
-    private boolean hasNearbyExam(Task current, List<Task> tasks) {
-        for (Task other : tasks) {
-            if (other == current) {
-                continue;
-            }
-
-            long diff = ChronoUnit.DAYS.between(current.getDeadline(), other.getDeadline());
-
-            if (diff > 0 && diff <= 3) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     private double calculatePriority(Task task, LocalDate today) {
         long daysLeft = ChronoUnit.DAYS.between(today, task.getDeadline());
         
