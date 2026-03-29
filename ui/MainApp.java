@@ -6,9 +6,11 @@ package ui;
 
 import model.Task;
 import model.StudySession;
+import planner.PlanExporter;
 import planner.PlanningService;
 import storage.StorageManager;
 
+import java.io.File;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -17,6 +19,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.layout.VBox;
 import javafx.scene.layout.HBox;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Label;
@@ -402,6 +405,16 @@ public class MainApp extends Application {
 
             for (StudySession session : plan) {
                 planListView.getItems().add(session);
+            }
+
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.setTitle("Save Study Plan");
+            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV Files", "*.csv"));
+
+            File file = fileChooser.showSaveDialog(stage);
+
+            if (file != null) {
+                PlanExporter.exportToCSV(plan, file.getAbsolutePath());
             }
         });
 

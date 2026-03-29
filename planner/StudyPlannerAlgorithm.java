@@ -14,6 +14,21 @@ public class StudyPlannerAlgorithm {
     private static final int MAX_PLANNING_DAYS = 90;
     private static final double URGENCY_THRESHOLD = 0.3;
 
+    private boolean hasNearbyExam(Task current, List<Task> tasks) {
+        for (Task other : tasks) {
+            if (other == current) {
+                continue;
+            }
+
+            long diff = ChronoUnit.DAYS.between(current.getDeadline(), other.getDeadline());
+
+            if (diff > 0 && diff <= 3) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private double calculatePriority(Task task, LocalDate today) {
         long daysLeft = ChronoUnit.DAYS.between(today, task.getDeadline());
         
@@ -106,6 +121,44 @@ public class StudyPlannerAlgorithm {
                 continue;
             }
 
+            Task nearestExam = null;
+            long minDays = Long.MAX_VALUE;
+
+            for (Task task : activeTasks) {
+                long daysLeft = ChronoUnit.DAYS.between(currentDate, task.getDeadline());
+
+                if (daysLeft >= 0 && daysLeft < minDays) {
+                    minDays = daysLeft;
+                    nearestExam = task;
+                }
+            }
+
+            if (nearestExam != null) {
+                long daysLeft = ChronoUnit.DAYS.between(currentDate, nearestExam.getDeadline());
+
+                if (daysLeft <= 3) {
+                    boolean hasCloseNext = false;
+
+                    for (Task other : activeTasks) {
+                        if (other == nearestExam) {
+                            continue;
+                        }
+
+                        long diff = ChronoUnit.DAYS.between(nearestExam.getDeadline(), other.getDeadline());
+
+                        if (diff > 0 && diff <= 3) {
+                            hasCloseNext = true;
+                            break;
+                        }
+                    }
+
+                    if (!hasCloseNext) {
+                        activeTasks.clear();
+                        activeTasks.add(nearestExam);
+                    }
+                }
+            }
+
             activeTasks.sort((a, b) -> {
                 double priorityA = calculatePriority(a, currentDate);
                 double priorityB = calculatePriority(b, currentDate);
@@ -131,12 +184,11 @@ public class StudyPlannerAlgorithm {
 
                 int remaining = remainingHours.get(task);
                 int recommendedHours;
+                long daysLeft = ChronoUnit.DAYS.between(currentDate, task.getDeadline());
 
                 if (remaining > 0) {
                     recommendedHours = (int) Math.max(1, Math.min(optimalHours, remaining));
                 } else {
-
-                    long daysLeft = ChronoUnit.DAYS.between(currentDate, task.getDeadline());
 
                     if (daysLeft <= 3) {
                         recommendedHours = 5;
@@ -145,8 +197,12 @@ public class StudyPlannerAlgorithm {
                     }
                 }
 
-                recommendedHours = Math.min(recommendedHours, 3);
-                recommendedHours = Math.min(recommendedHours, remainingHoursPerDay);
+                if (daysLeft <= 3) {
+                    recommendedHours = Math.min(recommendedHours, remainingHoursPerDay);
+                } else {
+                    recommendedHours = Math.min(recommendedHours, 5);
+                }
+                
 
                 if (recommendedHours >= 1) {
                     plan.add(new StudySession(currentDate, task.getName(), recommendedHours));
