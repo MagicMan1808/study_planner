@@ -14,6 +14,7 @@ import java.io.File;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -61,6 +62,7 @@ public class MainApp extends Application {
     public void start(Stage stage) {
 
         final Task[] selectedTaskRef = new Task[1];
+        AtomicReference<List<StudySession>> currentPlan = new AtomicReference<>(null);
 
         TextField nameField = new TextField();
         nameField.setPromptText("Name");
@@ -129,6 +131,18 @@ public class MainApp extends Application {
                 hoursField.setStyle(fieldStyle);
             }
         });
+
+        Button exportButton = new Button("Plan exportieren");
+        exportButton.setStyle(buttonStyle);
+
+        exportButton.setOnMouseEntered(e -> exportButton.setStyle(
+            "-fx-font-size: 14px;" +
+            "-fx-background-radius: 10;" +
+            "-fx-background-color: #333333;" +
+            "-fx-text-fill: white;" +
+            "-fx-padding: 8 15 8 15;"
+        ));
+        exportButton.setOnMouseExited(e -> exportButton.setStyle(buttonStyle));
 
         Button planbutton = new Button("Plan anzeigen");
 
@@ -401,10 +415,18 @@ public class MainApp extends Application {
             // Plan berechnen
             PlanningService service = new PlanningService();
             List<StudySession> plan = service.createPlan(tasks);
+            currentPlan.set(plan);
             planListView.getItems().clear();
 
             for (StudySession session : plan) {
                 planListView.getItems().add(session);
+            }
+        });
+
+        exportButton.setOnAction(e -> {
+            if (currentPlan.get() == null || currentPlan.get().isEmpty()) {
+                showError(statusLabel, "❌ Bitte zuerst einen Plan erstellen!");
+                return;
             }
 
             FileChooser fileChooser = new FileChooser();
@@ -414,90 +436,96 @@ public class MainApp extends Application {
             File file = fileChooser.showSaveDialog(stage);
 
             if (file != null) {
-                PlanExporter.exportToCSV(plan, file.getAbsolutePath());
+                PlanExporter.exportToCSV(currentPlan.get(), file.getAbsolutePath());
+                showSuccess(statusLabel, "✅ Plan exportiert!");
             }
+
+            // PlanExporter.exportToCSV(plan, "study_plan.csv");
         });
 
         addButton.setOnAction(e -> {
             
-                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
-                
-                try {
-                    String name = nameField.getText();
-                    LocalDate deadline = LocalDate.parse(deadlineField.getText(), formatter);
-                    int difficulty = Integer.parseInt(difficultyField.getText());
-                    int hours = Integer.parseInt(hoursField.getText());
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+            
+            try {
+                String name = nameField.getText();
+                LocalDate deadline = LocalDate.parse(deadlineField.getText(), formatter);
+                int difficulty = Integer.parseInt(difficultyField.getText());
+                int hours = Integer.parseInt(hoursField.getText());
 
-                    Task newTask;
+                Task newTask;
 
-                    if (selectedTaskRef[0] != null) {
-                        // EDIT -> gleiche ID behalten
-                        newTask = new Task(
-                            selectedTaskRef[0].getId(),
-                            name,
-                            deadline,
-                            difficulty,
-                            hours
-                        );
-                    } else {
-                        // NEU -> neue UUID
-                        newTask = new Task(name, deadline, difficulty, hours);
-                    }
-
-                    StorageManager storage = new StorageManager();
-                    List<Task> tasks = storage.loadTasks();
-
-                    if (selectedTaskRef[0] != null) {
-                        // Edit mode
-                        Task oldTask = selectedTaskRef[0];
-
-                        boolean exists = tasks.stream()
-                            .anyMatch(t ->
-                                t.getName().equalsIgnoreCase(name) &&
-                                !t.getId().equals(oldTask.getId())
-                            );
-
-                        if (exists) {
-                            showError(statusLabel, "❌ Task mit diesem Namen existiert bereits!");
-                            return;
-                        }
-
-                        tasks.removeIf(t -> t.getId().equals(oldTask.getId()));
-
-                        tasks.add(newTask);
-
-                        showSuccess(statusLabel, "✏️ Task aktualisiert!");
-
-                    } else {
-
-                        boolean exists = tasks.stream()
-                            .anyMatch(t -> t.getName().equalsIgnoreCase(name));
-
-                        if (exists) {
-                            showError(statusLabel, "❌ Task mit diesem Namen existiert bereits!");
-                            return;
-                        }
-
-                        tasks.add(newTask);
-                        showSuccess(statusLabel, "✅ Task gespeichert!");
-                    }
-
-                    storage.saveTasks(tasks);
-                    refreshTasks(listView);
-                    
-
-                    // Felder leeren
-                    nameField.clear();
-                    deadlineField.clear();
-                    difficultyField.clear();
-                    hoursField.clear();
-
-                    selectedTaskRef[0] = null;
-                    addButton.setText("Task hinzufügen");
-
-                } catch (Exception ex) {
-                    showError(statusLabel, "❌ Datum muss Format DD.MM.YYYY haben!");
+                if (selectedTaskRef[0] != null) {
+                    // EDIT -> gleiche ID behalten
+                    newTask = new Task(
+                        selectedTaskRef[0].getId(),
+                        name,
+                        deadline,
+                        difficulty,
+                        hours
+                    );
+                } else {
+                    // NEU -> neue UUID
+                    newTask = new Task(name, deadline, difficulty, hours);
                 }
+
+                StorageManager storage = new StorageManager();
+                List<Task> tasks = storage.loadTasks();
+
+                if (selectedTaskRef[0] != null) {
+                    // Edit mode
+                    Task oldTask = selectedTaskRef[0];
+
+                    boolean exists = tasks.stream()
+                        .anyMatch(t ->
+                            t.getName().equalsIgnoreCase(name) &&
+                            !t.getId().equals(oldTask.getId())
+                        );
+
+                    if (exists) {
+                        showError(statusLabel, "❌ Task mit diesem Namen existiert bereits!");
+                        return;
+                    }
+
+                    tasks.removeIf(t -> t.getId().equals(oldTask.getId()));
+
+                    tasks.add(newTask);
+
+                    showSuccess(statusLabel, "✏️ Task aktualisiert!");
+
+                } else {
+
+                    boolean exists = tasks.stream()
+                        .anyMatch(t -> t.getName().equalsIgnoreCase(name));
+
+                    if (exists) {
+                        showError(statusLabel, "❌ Task mit diesem Namen existiert bereits!");
+                        return;
+                    }
+
+                    tasks.add(newTask);
+                    showSuccess(statusLabel, "✅ Task gespeichert!");
+                }
+
+                storage.saveTasks(tasks);
+                refreshTasks(listView);
+                
+
+                // Felder leeren
+                nameField.clear();
+                deadlineField.clear();
+                difficultyField.clear();
+                hoursField.clear();
+
+                selectedTaskRef[0] = null;
+                addButton.setText("Task hinzufügen");
+
+            } catch (Exception ex) {
+                showError(statusLabel, "❌ Datum muss Format DD.MM.YYYY haben!");
+            }
+
+            currentPlan.set(null);
+            planListView.getItems().clear();
         });
 
         refreshTasksButton.setOnAction(e -> {
@@ -510,11 +538,17 @@ public class MainApp extends Application {
             } else {
                 showSuccess(statusLabel, "✅ Tasks aktualisiert!");
             }
+
+            currentPlan.set(null);
+            planListView.getItems().clear();
         });
 
         deleteButton.setOnAction(e -> {
 
             Task selectedTask = listView.getSelectionModel().getSelectedItem();
+
+            currentPlan.set(null);
+            planListView.getItems().clear();
 
             if (selectedTask == null) {
                 showError(statusLabel, "❌ Bitte wähle einen Task aus!");
@@ -555,10 +589,14 @@ public class MainApp extends Application {
                 hoursField
         );
 
-        HBox buttonRow = new HBox(10,
+        HBox buttonRow1 = new HBox(10,
                 refreshTasksButton,
-                editButton,
+                editButton
+        );
+
+        HBox buttonRow2 = new HBox(10,
                 planbutton,
+                exportButton,
                 deleteButton
         );
 
@@ -588,7 +626,8 @@ public class MainApp extends Application {
                 inputCard,
 
                 actionLabel,
-                buttonRow,
+                buttonRow1,
+                buttonRow2,
 
                 tasksLabel,
                 listView,
