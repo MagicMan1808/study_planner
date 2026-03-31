@@ -14,12 +14,15 @@ import java.io.File;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
+
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.Dialog;
 import javafx.scene.layout.VBox;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
@@ -134,16 +137,28 @@ public class MainApp extends Application {
         });
 
         Button exportButton = new Button("Plan exportieren");
-        exportButton.setStyle(buttonStyle);
+        exportButton.setStyle(
+            "-fx-font-size: 14px;" +
+            "-fx-background-radius: 10;" +
+            "-fx-background-color: #856404;" +
+            "-fx-text-fill: white;" +
+            "-fx-padding: 8 15 8 15;"
+        );
 
         exportButton.setOnMouseEntered(e -> exportButton.setStyle(
             "-fx-font-size: 14px;" +
             "-fx-background-radius: 10;" +
-            "-fx-background-color: #333333;" +
+            "-fx-background-color: #c19205;" +
             "-fx-text-fill: white;" +
             "-fx-padding: 8 15 8 15;"
         ));
-        exportButton.setOnMouseExited(e -> exportButton.setStyle(buttonStyle));
+        exportButton.setOnMouseExited(e -> exportButton.setStyle(
+            "-fx-font-size: 14px;" +
+            "-fx-background-radius: 10;" +
+            "-fx-background-color: #856404;" +
+            "-fx-text-fill: white;" +
+            "-fx-padding: 8 15 8 15;"
+        ));
 
         Button planbutton = new Button("Plan anzeigen");
 
@@ -345,6 +360,42 @@ public class MainApp extends Application {
         ));
         editButton.setOnMouseExited(e -> editButton.setStyle(buttonStyle));
 
+        // Buttons zum Bearbeiten des generierten Plans
+        Button editPlanEntryButton = new Button("Eintrag bearbeiten");
+        Button deletePlanEntryButton = new Button("Eintrag löschen");
+        Button addPlanEntryButton = new Button("Eintrag hinzufügen");
+
+        editPlanEntryButton.setStyle(buttonStyle);
+        deletePlanEntryButton.setStyle(buttonStyle);
+        addPlanEntryButton.setStyle(buttonStyle);
+
+        editPlanEntryButton.setOnMouseEntered(e -> editPlanEntryButton.setStyle(
+            "-fx-font-size: 14px;" +
+            "-fx-background-radius: 10;" +
+            "-fx-background-color: #333333;" +
+            "-fx-text-fill: white;" +
+            "-fx-padding: 8 15 8 15;"
+        ));
+        editPlanEntryButton.setOnMouseExited(e -> editPlanEntryButton.setStyle(buttonStyle));
+
+        deletePlanEntryButton.setOnMouseEntered(e -> deletePlanEntryButton.setStyle(
+            "-fx-font-size: 14px;" +
+            "-fx-background-radius: 10;" +
+            "-fx-background-color: #333333;" +
+            "-fx-text-fill: white;" +
+            "-fx-padding: 8 15 8 15;"
+        ));
+        deletePlanEntryButton.setOnMouseExited(e -> deletePlanEntryButton.setStyle(buttonStyle));
+
+        addPlanEntryButton.setOnMouseEntered(e -> addPlanEntryButton.setStyle(
+            "-fx-font-size: 14px;" +
+            "-fx-background-radius: 10;" +
+            "-fx-background-color: #333333;" +
+            "-fx-text-fill: white;" +
+            "-fx-padding: 8 15 8 15;"
+        ));
+        addPlanEntryButton.setOnMouseExited(e -> addPlanEntryButton.setStyle(buttonStyle));
+
         Label title = new Label("Study Planner");
         title.setStyle("-fx-font-size: 25px; -fx-font-weight: bold; -fx-text-fill: white");
 
@@ -355,6 +406,84 @@ public class MainApp extends Application {
             "-fx-background-radius: 8;" +
             "-fx-text-fill: white;"
         );
+
+        editPlanEntryButton.setOnAction(e -> {
+            StudySession selected = planListView.getSelectionModel().getSelectedItem();
+            if (selected == null) {
+                showError(statusLabel, "❌ Bitte wähle einen Eintrag aus!");
+                return;
+            }
+
+            Dialog<StudySession> dialog = new Dialog<>();
+            dialog.setTitle("Eintrag bearbeiten");
+            dialog.setHeaderText("Lerneinheit anpassen");
+
+            TextField dateField = new TextField(selected.getDate().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")));
+            TextField subjectField = new TextField(selected.getSubject());
+            TextField hourField = new TextField(String.valueOf(selected.getDuration()));
+
+            dateField.setPromptText("DD.MM.YYYY");
+            subjectField.setPromptText("Fach / Aufgabe");
+            hourField.setPromptText("Stunden");
+
+            GridPane grid = new GridPane();
+            grid.setHgap(10);
+            grid.setVgap(10);
+            grid.add(new Label("Datum:"), 0, 0);
+            grid.add(dateField, 1, 0);
+            grid.add(new Label("Fach:"), 0, 1);
+            grid.add(subjectField, 1, 1);
+            grid.add(new Label("Stunden:"), 0, 2);
+            grid.add(hourField, 1, 2);
+
+            dialog.getDialogPane().setContent(grid);
+            dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+            dialog.setResultConverter(btn -> {
+                if (btn == ButtonType.OK) {
+                    try {
+                        LocalDate newDate = LocalDate.parse(dateField.getText().trim(), DateTimeFormatter.ofPattern("dd.MM.yyyy"));
+                        String newSubject = subjectField.getText().trim();
+                        int newHours = Integer.parseInt(hourField.getText().trim());
+                        
+                        if (newSubject.isEmpty()) {
+                            throw new IllegalArgumentException("Fach darf nicht leer sein!");
+                        }
+                        if (newHours <= 0) {
+                            throw new IllegalArgumentException("Stunden müssen positiv sein!");
+                        }
+
+                        return new StudySession(newDate, newSubject, newHours);
+                    } catch (Exception ex) {
+                        showError(statusLabel, "❌ Ungültige Eingabe: " + ex.getMessage());
+                        return null;
+                    }
+                }
+                return null;
+            });
+
+            dialog.showAndWait().ifPresent(newSession -> {
+                List<StudySession> plan = currentPlan.get();
+                int index = plan.indexOf(selected);
+                plan.set(index, newSession);
+                plan.sort((a, b) -> a.getDate().compareTo(b.getDate()));
+                planListView.getItems().setAll(plan);
+                showSuccess(statusLabel, "✅ Eintrag aktualisiert!");
+            });
+        });
+
+        deletePlanEntryButton.setOnAction(e -> {
+            StudySession selected = planListView.getSelectionModel().getSelectedItem();
+            if (selected == null) {
+                showError(statusLabel, "❌ Bitte wähle einen Eintrag aus!");
+                return;
+            }
+
+            List<StudySession> plan = currentPlan.get();
+            plan.remove(selected);
+            planListView.getItems().setAll(plan);
+            showSuccess(statusLabel, "✅ Eintrag gelöscht!");
+        });
 
         editButton.setOnAction(e -> {
             Task selected = listView.getSelectionModel().getSelectedItem();
@@ -382,6 +511,77 @@ public class MainApp extends Application {
                 "-fx-text-fill: #1565c0;" +
                 "-fx-font-weight: bold;"
             );
+        });
+
+        addPlanEntryButton.setOnAction(e -> {
+            Dialog<StudySession> dialog = new Dialog<>();
+            dialog.setTitle("Neuen Eintrag hinzufügen");
+            dialog.setHeaderText("Manuelle Lerneinheit einplanen");
+
+            TextField dateField = new TextField(LocalDate.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")));
+            TextField subjectField = new TextField();
+            TextField hourField = new TextField();
+
+            dateField.setPromptText("DD.MM.YYYY");
+            subjectField.setPromptText("Fach / Aufgabe");
+            hourField.setPromptText("Stunden");
+
+            GridPane grid = new GridPane();
+            grid.setHgap(10);
+            grid.setVgap(10);
+            grid.add(new Label("Datum:"), 0, 0);
+            grid.add(dateField, 1, 0);
+            grid.add(new Label("Fach:"), 0, 1);
+            grid.add(subjectField, 1, 1);
+            grid.add(new Label("Stunden:"), 0, 2);
+            grid.add(hourField, 1, 2);
+
+            dialog.getDialogPane().setContent(grid);
+            dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+            dialog.setResultConverter(btn -> {
+                if (btn == ButtonType.OK) {
+                    try {
+                        LocalDate newDate = LocalDate.parse(dateField.getText().trim(), DateTimeFormatter.ofPattern("dd.MM.yyyy"));
+                        String newSubject = subjectField.getText().trim();
+                        int newHours = Integer.parseInt(hourField.getText().trim());
+                        
+                        if (newSubject.isEmpty()) {
+                            throw new IllegalArgumentException("Fach darf nicht leer sein!");
+                        }
+                        if (newHours <= 0) {
+                            throw new IllegalArgumentException("Stunden müssen positiv sein!");
+                        }
+
+                        return new StudySession(newDate, newSubject, newHours);
+                    } catch (Exception ex) {
+                        showError(statusLabel, "❌ Ungültige Eingabe: " + ex.getMessage());
+                        return null;
+                    }
+                }
+                return null;
+            });
+
+            dialog.showAndWait().ifPresent(newSession -> {
+                List<StudySession> plan = currentPlan.get();
+                plan.add(newSession);
+                plan.sort((a, b) -> a.getDate().compareTo(b.getDate()));
+                planListView.getItems().setAll(plan);
+                showSuccess(statusLabel, "✅ Eintrag hinzugefügt!");
+            });
+        });
+
+        deletePlanEntryButton.setOnAction(e -> {
+            StudySession selected = planListView.getSelectionModel().getSelectedItem();
+            if (selected == null) {
+                showError(statusLabel, "❌ Bitte wähle einen Eintrag aus!");
+                return;
+            }
+
+            List<StudySession> plan = currentPlan.get();
+            plan.remove(selected);
+            planListView.getItems().setAll(plan);
+            showSuccess(statusLabel, "✅ Eintrag gelöscht!");
         });
 
         planbutton.setOnAction(e -> {
@@ -657,6 +857,11 @@ public class MainApp extends Application {
             "-fx-background-radius: 10;"
         );
 
+        HBox planEditBox = new HBox(10, editPlanEntryButton, deletePlanEntryButton, addPlanEntryButton);
+        planEditBox.setStyle(
+            "-fx-padding: 5 0 0 0;"
+        );
+
         Label taskLabel = new Label("Task hinzufügen:");
         taskLabel.setStyle("-fx-text-fill: #bbbbbb;");
 
@@ -683,7 +888,9 @@ public class MainApp extends Application {
                 listView,
 
                 planLabel,
-                planListView
+                planListView,
+
+                planEditBox
         );
 
         root.setStyle("-fx-padding: 20; -fx-background-color: #121212;");
