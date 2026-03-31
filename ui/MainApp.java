@@ -13,6 +13,7 @@ import storage.StorageManager;
 import java.io.File;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -444,11 +445,16 @@ public class MainApp extends Application {
                     try {
                         LocalDate newDate = LocalDate.parse(dateField.getText().trim(), DateTimeFormatter.ofPattern("dd.MM.yyyy"));
                         String newSubject = subjectField.getText().trim();
-                        int newHours = Integer.parseInt(hourField.getText().trim());
+                        String newHoursStr = hourField.getText().trim();
                         
                         if (newSubject.isEmpty()) {
                             throw new IllegalArgumentException("Fach darf nicht leer sein!");
                         }
+                        if (newHoursStr.isEmpty()) {
+                            throw new IllegalArgumentException("Gib eine Anzahl an Stunden an!");
+                        }
+
+                        int newHours = Integer.parseInt(newHoursStr);
                         if (newHours <= 0) {
                             throw new IllegalArgumentException("Stunden müssen positiv sein!");
                         }
@@ -485,34 +491,6 @@ public class MainApp extends Application {
             showSuccess(statusLabel, "✅ Eintrag gelöscht!");
         });
 
-        editButton.setOnAction(e -> {
-            Task selected = listView.getSelectionModel().getSelectedItem();
-
-            if (selected == null) {
-                showError(statusLabel, "❌ Bitte wähle einen Task aus!");
-                return;
-            }
-
-            selectedTaskRef[0] = selected;
-
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
-
-            nameField.setText(selected.getName());
-            deadlineField.setText(selected.getDeadline().format(formatter));
-            difficultyField.setText(String.valueOf(selected.getDifficulty()));
-            hoursField.setText(String.valueOf(selected.getEstimatedHours()));
-
-            addButton.setText("Task aktualisieren");
-            statusLabel.setText("✏️ Bearbeite Task...");
-            statusLabel.setStyle(
-                "-fx-padding: 10;" +
-                "-fx-background-radius: 8;" +
-                "-fx-background-color: #e3f2fd;" +
-                "-fx-text-fill: #1565c0;" +
-                "-fx-font-weight: bold;"
-            );
-        });
-
         addPlanEntryButton.setOnAction(e -> {
             Dialog<StudySession> dialog = new Dialog<>();
             dialog.setTitle("Neuen Eintrag hinzufügen");
@@ -541,47 +519,59 @@ public class MainApp extends Application {
 
             dialog.setResultConverter(btn -> {
                 if (btn == ButtonType.OK) {
-                    try {
-                        LocalDate newDate = LocalDate.parse(dateField.getText().trim(), DateTimeFormatter.ofPattern("dd.MM.yyyy"));
-                        String newSubject = subjectField.getText().trim();
-                        int newHours = Integer.parseInt(hourField.getText().trim());
-                        
-                        if (newSubject.isEmpty()) {
-                            throw new IllegalArgumentException("Fach darf nicht leer sein!");
-                        }
-                        if (newHours <= 0) {
-                            throw new IllegalArgumentException("Stunden müssen positiv sein!");
-                        }
-
-                        return new StudySession(newDate, newSubject, newHours);
-                    } catch (Exception ex) {
-                        showError(statusLabel, "❌ Ungültige Eingabe: " + ex.getMessage());
+                    String dateStr = dateField.getText().trim();
+                    if (dateStr.isEmpty()) {
+                        showError(statusLabel, "❌ Bitte gib ein Datum an!");
                         return null;
                     }
+                    LocalDate newDate;
+                    try {
+                        newDate = LocalDate.parse(dateStr, DateTimeFormatter.ofPattern("dd.MM.yyyy"));
+                    } catch (Exception ex) {
+                        showError(statusLabel, "❌ Datum muss im Format DD.MM.YYYY sein!");
+                        return null;
+                    }
+
+                    String newSubject = subjectField.getText().trim();
+                    if (newSubject.isEmpty()) {
+                        showError(statusLabel, "❌ Bitte gib ein Fach an!");
+                        return null;
+                    }
+
+                    String hoursStr = hourField.getText().trim();
+                    if (hoursStr.isEmpty()) {
+                        showError(statusLabel, "❌ Bitte gib die Lernstunden an!");
+                        return null;
+                    }
+                    int newHours;
+                    try {
+                        newHours = Integer.parseInt(hoursStr);
+                    } catch (NumberFormatException ex) {
+                        showError(statusLabel, "❌ Stunden müssen eine ganze Zahl sein!");
+                        return null;
+                    }
+                    if (newHours <= 0) {
+                        showError(statusLabel, "❌ Die Lernstunden müssen größer als 0 sein!");
+                        return null;
+                    }
+
+                    // Alles gültig -> neuen Eintrag erstellen
+                    return new StudySession(newDate, newSubject, newHours);
                 }
                 return null;
             });
 
             dialog.showAndWait().ifPresent(newSession -> {
                 List<StudySession> plan = currentPlan.get();
+                if (plan == null) {
+                    plan = new ArrayList<>();
+                    currentPlan.set(plan);
+                }
                 plan.add(newSession);
                 plan.sort((a, b) -> a.getDate().compareTo(b.getDate()));
                 planListView.getItems().setAll(plan);
                 showSuccess(statusLabel, "✅ Eintrag hinzugefügt!");
             });
-        });
-
-        deletePlanEntryButton.setOnAction(e -> {
-            StudySession selected = planListView.getSelectionModel().getSelectedItem();
-            if (selected == null) {
-                showError(statusLabel, "❌ Bitte wähle einen Eintrag aus!");
-                return;
-            }
-
-            List<StudySession> plan = currentPlan.get();
-            plan.remove(selected);
-            planListView.getItems().setAll(plan);
-            showSuccess(statusLabel, "✅ Eintrag gelöscht!");
         });
 
         planbutton.setOnAction(e -> {
