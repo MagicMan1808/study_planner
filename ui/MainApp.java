@@ -14,6 +14,7 @@ import java.io.File;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
 import javafx.application.Application;
 import javafx.scene.Scene;
@@ -448,10 +449,59 @@ public class MainApp extends Application {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
             
             try {
-                String name = nameField.getText();
-                LocalDate deadline = LocalDate.parse(deadlineField.getText(), formatter);
-                int difficulty = Integer.parseInt(difficultyField.getText());
-                int hours = Integer.parseInt(hoursField.getText());
+                String name = nameField.getText().trim();
+                String deadlineStr = deadlineField.getText().trim();
+                String difficultyStr = difficultyField.getText().trim();
+                String hoursStr = hoursField.getText().trim();
+
+                if (name.isEmpty()) {
+                    showError(statusLabel, "❌ Bitte gib einen Namen ein!");
+                    return;
+                }
+                if (deadlineStr.isEmpty()) {
+                    showError(statusLabel, "❌ Bitte gib eine Deadline ein!");
+                    return;
+                }
+                if (difficultyStr.isEmpty()) {
+                    showError(statusLabel, "❌ Schwierigkeit angeben (1-5)!");
+                    return;
+                }
+                if (hoursStr.isEmpty()) {
+                    showError(statusLabel, "❌ Gib benötigte Stunden an (mind. 1)!");
+                    return;
+                }
+
+                LocalDate deadline;
+                try {
+                    deadline = LocalDate.parse(deadlineStr, formatter);
+                } catch (Exception ex) {
+                    showError(statusLabel, "❌ Datum muss Format DD.MM.YYYY haben!");
+                    return;
+                }
+
+                int difficulty;
+                try {
+                    difficulty = Integer.parseInt(difficultyStr);
+                } catch (NumberFormatException ex) {
+                    showError(statusLabel, "❌ Schwierigkeit muss eine Zahl sein (1-5)!");
+                    return;
+                }
+                if (difficulty < 1 || difficulty > 5) {
+                    showError(statusLabel, "❌ Schwierigkeit muss zwischen 1 und 5 liegen!");
+                    return;
+                }
+
+                int hours;
+                try {
+                    hours = Integer.parseInt(hoursStr);
+                } catch (NumberFormatException ex) {
+                    showError(statusLabel, "❌ Stunden müssen eine Zahl sein!");
+                    return;
+                }
+                if (hours <= 0) {
+                    showError(statusLabel, "❌ Gib benötigte Stunden an (mind. 1)!");
+                    return;
+                }
 
                 Task newTask;
 
@@ -645,7 +695,7 @@ public class MainApp extends Application {
             planListView.getSelectionModel().clearSelection();
         });
 
-        Scene scene = new Scene(root, 600, 700);
+        Scene scene = new Scene(root, 600, 750);
 
         scene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
 
