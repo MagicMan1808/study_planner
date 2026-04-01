@@ -745,6 +745,32 @@ public class MainApp extends Application {
             });
         });
 
+        editButton.setOnAction(e -> {
+            Task selected = listView.getSelectionModel().getSelectedItem();
+            if (selected == null) {
+                showError(statusLabel, "❌ Bitte wähle einen Task aus!");
+                return;
+            }
+            
+            selectedTaskRef[0] = selected;
+            
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+
+            nameField.setText(selected.getName());
+            deadlineField.setText(selected.getDeadline().format(formatter));
+            difficultyField.setText(String.valueOf(selected.getDifficulty()));
+            hoursField.setText(String.valueOf(selected.getEstimatedHours()));
+            addButton.setText("Task aktualisieren");
+            statusLabel.setText("✏️ Bearbeite Task...");
+            statusLabel.setStyle(
+                "-fx-padding: 10;" +
+                "-fx-background-radius: 8;" +
+                "-fx-background-color: #e3f2fd;" +
+                "-fx-text-fill: #1565c0;" +
+                "-fx-font-weight: bold;"
+            );
+        });
+
         planbutton.setOnAction(e -> {
             statusLabel.setText("");
             statusLabel.setStyle("");
