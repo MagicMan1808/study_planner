@@ -418,6 +418,8 @@ public class MainApp extends Application {
             Dialog<StudySession> dialog = new Dialog<>();
             dialog.setTitle("Eintrag bearbeiten");
             dialog.setHeaderText("Lerneinheit anpassen");
+            
+            dialog.getDialogPane().getStylesheets().add(getClass().getResource("style.css").toExternalForm());
 
             TextField dateField = new TextField(selected.getDate().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")));
             TextField subjectField = new TextField(selected.getSubject());
@@ -427,18 +429,102 @@ public class MainApp extends Application {
             subjectField.setPromptText("Fach / Aufgabe");
             hourField.setPromptText("Stunden");
 
+            dateField.setStyle(fieldStyle);
+            subjectField.setStyle(fieldStyle);
+            hourField.setStyle(fieldStyle);
+
+            dateField.focusedProperty().addListener((obs, oldVal, newVal) -> {
+                if (newVal) {
+                    dateField.setStyle(fieldStyle + "-fx-border-color: #2979ff;");
+                } else {
+                    dateField.setStyle(fieldStyle);
+                }
+            });
+
+            subjectField.focusedProperty().addListener((obs, oldVal, newVal) -> {
+                if (newVal) {
+                    subjectField.setStyle(fieldStyle + "-fx-border-color: #2979ff;");
+                } else {
+                    subjectField.setStyle(fieldStyle);
+                }
+            });
+
+            hourField.focusedProperty().addListener((obs, oldVal, newVal) -> {
+                if (newVal) {
+                    hourField.setStyle(fieldStyle + "-fx-border-color: #2979ff;");
+                } else {
+                    hourField.setStyle(fieldStyle);
+                }
+            });
+
+            Label dateLabel = new Label("Datum:");
+            dateLabel.setStyle("-fx-text-fill: white;");
+            Label subjectLabel = new Label("Fach:");
+            subjectLabel.setStyle("-fx-text-fill: white;");
+            Label hoursLabel = new Label("Stunden:");
+            hoursLabel.setStyle("-fx-text-fill: white;");
+
             GridPane grid = new GridPane();
             grid.setHgap(10);
             grid.setVgap(10);
-            grid.add(new Label("Datum:"), 0, 0);
+            grid.add(dateLabel, 0, 0);
             grid.add(dateField, 1, 0);
-            grid.add(new Label("Fach:"), 0, 1);
+            grid.add(subjectLabel, 0, 1);
             grid.add(subjectField, 1, 1);
-            grid.add(new Label("Stunden:"), 0, 2);
+            grid.add(hoursLabel, 0, 2);
             grid.add(hourField, 1, 2);
 
             dialog.getDialogPane().setContent(grid);
             dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+            Button okButton = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
+            Button cancelButton = (Button) dialog.getDialogPane().lookupButton(ButtonType.CANCEL);
+
+            okButton.setStyle(
+                "-fx-font-size: 14px;" +
+                "-fx-background-radius: 10;" +
+                "-fx-background-color: #4CAF50;" +
+                "-fx-text-fill: white;" +
+                "-fx-padding: 8 15 8 15;"
+            );
+
+            okButton.setOnMouseEntered(ex -> okButton.setStyle(
+                "-fx-font-size: 14px;" +
+                "-fx-background-radius: 10;" +
+                "-fx-background-color: #5ed662;" +
+                "-fx-text-fill: white;" +
+                "-fx-padding: 8 15 8 15;"
+            ));
+            okButton.setOnMouseExited(ex -> okButton.setStyle(
+                "-fx-font-size: 14px;" +
+                "-fx-background-radius: 10;" +
+                "-fx-background-color: #4CAF50;" +
+                "-fx-text-fill: white;" +
+                "-fx-padding: 8 15 8 15;"
+            ));
+
+            cancelButton.setStyle(
+                "-fx-font-size: 14px;" +
+                "-fx-background-radius: 10;" +
+                "-fx-background-color: #c0392b;" +
+                "-fx-text-fill: white;" +
+                "-fx-padding: 8 15 8 15;"
+            );
+
+            cancelButton.setOnMouseEntered(ex -> cancelButton.setStyle(
+                "-fx-font-size: 14px;" +
+                "-fx-background-radius: 10;" +
+                "-fx-background-color: #e74c3c;" +
+                "-fx-text-fill: white;" +
+                "-fx-padding: 8 15 8 15;"
+            ));
+            cancelButton.setOnMouseExited(ex -> cancelButton.setStyle(
+                "-fx-font-size: 14px;" +
+                "-fx-background-radius: 10;" +
+                "-fx-background-color: #c0392b;" +
+                "-fx-text-fill: white;" +
+                "-fx-padding: 8 15 8 15;"
+            ));
 
             dialog.setResultConverter(btn -> {
                 if (btn == ButtonType.OK) {
@@ -496,6 +582,8 @@ public class MainApp extends Application {
             dialog.setTitle("Neuen Eintrag hinzufügen");
             dialog.setHeaderText("Manuelle Lerneinheit einplanen");
 
+            dialog.getDialogPane().getStylesheets().add(getClass().getResource("style.css").toExternalForm());
+
             TextField dateField = new TextField(LocalDate.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")));
             TextField subjectField = new TextField();
             TextField hourField = new TextField();
@@ -504,18 +592,101 @@ public class MainApp extends Application {
             subjectField.setPromptText("Fach / Aufgabe");
             hourField.setPromptText("Stunden");
 
+            dateField.setStyle(fieldStyle);
+            subjectField.setStyle(fieldStyle);
+            hourField.setStyle(fieldStyle);
+
+            dateField.focusedProperty().addListener((obs, oldVal, newVal) -> {
+                if (newVal) {
+                    dateField.setStyle(fieldStyle + "-fx-border-color: #2979ff;");
+                } else {
+                    dateField.setStyle(fieldStyle);
+                }
+            });
+
+            subjectField.focusedProperty().addListener((obs, oldVal, newVal) -> {
+                if (newVal) {
+                    subjectField.setStyle(fieldStyle + "-fx-border-color: #2979ff;");
+                } else {
+                    subjectField.setStyle(fieldStyle);
+                }
+            });
+
+            hourField.focusedProperty().addListener((obs, oldVal, newVal) -> {
+                if (newVal) {
+                    hourField.setStyle(fieldStyle + "-fx-border-color: #2979ff;");
+                } else {
+                    hourField.setStyle(fieldStyle);
+                }
+            });
+
+            Label dateLabel = new Label("Datum:");
+            dateLabel.setStyle("-fx-text-fill: white;");
+            Label subjectLabel = new Label("Fach:");
+            subjectLabel.setStyle("-fx-text-fill: white;");
+            Label hoursLabel = new Label("Stunden:");
+            hoursLabel.setStyle("-fx-text-fill: white;");
+
             GridPane grid = new GridPane();
             grid.setHgap(10);
             grid.setVgap(10);
-            grid.add(new Label("Datum:"), 0, 0);
+            grid.add(dateLabel, 0, 0);
             grid.add(dateField, 1, 0);
-            grid.add(new Label("Fach:"), 0, 1);
+            grid.add(subjectLabel, 0, 1);
             grid.add(subjectField, 1, 1);
-            grid.add(new Label("Stunden:"), 0, 2);
+            grid.add(hoursLabel, 0, 2);
             grid.add(hourField, 1, 2);
 
             dialog.getDialogPane().setContent(grid);
             dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+            Button okButton = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
+            Button cancelButton = (Button) dialog.getDialogPane().lookupButton(ButtonType.CANCEL);
+            okButton.setStyle(
+                "-fx-font-size: 14px;" +
+                "-fx-background-radius: 10;" +
+                "-fx-background-color: #4CAF50;" +
+                "-fx-text-fill: white;" +
+                "-fx-padding: 8 15 8 15;"
+            );
+
+            okButton.setOnMouseEntered(ex -> okButton.setStyle(
+                "-fx-font-size: 14px;" +
+                "-fx-background-radius: 10;" +
+                "-fx-background-color: #5ed662;" +
+                "-fx-text-fill: white;" +
+                "-fx-padding: 8 15 8 15;"
+            ));
+            okButton.setOnMouseExited(ex -> okButton.setStyle(
+                "-fx-font-size: 14px;" +
+                "-fx-background-radius: 10;" +
+                "-fx-background-color: #4CAF50;" +
+                "-fx-text-fill: white;" +
+                "-fx-padding: 8 15 8 15;"
+            ));
+
+            cancelButton.setStyle(
+                "-fx-font-size: 14px;" +
+                "-fx-background-radius: 10;" +
+                "-fx-background-color: #c0392b;" +
+                "-fx-text-fill: white;" +
+                "-fx-padding: 8 15 8 15;"
+            );
+
+            cancelButton.setOnMouseEntered(ex -> cancelButton.setStyle(
+                "-fx-font-size: 14px;" +
+                "-fx-background-radius: 10;" +
+                "-fx-background-color: #e74c3c;" +
+                "-fx-text-fill: white;" +
+                "-fx-padding: 8 15 8 15;"
+            ));
+            cancelButton.setOnMouseExited(ex -> cancelButton.setStyle(
+                "-fx-font-size: 14px;" +
+                "-fx-background-radius: 10;" +
+                "-fx-background-color: #c0392b;" +
+                "-fx-text-fill: white;" +
+                "-fx-padding: 8 15 8 15;"
+            ));
 
             dialog.setResultConverter(btn -> {
                 if (btn == ButtonType.OK) {

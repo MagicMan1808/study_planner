@@ -30,3 +30,18 @@
     -fx-pref-width: 10px;
     -fx-pref-height: 10px;
 }
+
+/* Dialog-Stile für Dark Mode */
+.dialog-pane {
+    -fx-background-color: #121212;
+}
+
+.dialog-pane .header-panel {
+    -fx-background-color: #1e1e1e;
+}
+
+.dialog-pane .header-panel .label {
+    -fx-text-fill: white;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+}
