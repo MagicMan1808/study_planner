@@ -65,7 +65,7 @@ study_planner/
 
 ---
 
-## 📸 Screenshots
+## ⚙️ Requirements
 
 - Java17 or higher
 - JavaFX SDK (21+ recommended)
