@@ -77,12 +77,6 @@ public class StudyPlannerAlgorithm {
             return -1.0;
         }
 
-        long totalStudyDays = ChronoUnit.DAYS.between(
-                dateForPlanningStart(date),
-                task.getDeadline()
-        );
-
-        // Progress is measured from today, so it remains bounded from 0 to 1.
         long totalDaysFromToday = ChronoUnit.DAYS.between(
                 LocalDate.now(),
                 task.getDeadline()
@@ -103,14 +97,6 @@ public class StudyPlannerAlgorithm {
         double difficultyWeight = 1.0 + Math.max(0, task.getDifficulty()) / 20.0;
 
         return workloadPressure * backloadingWeight * difficultyWeight;
-    }
-
-    /*
-     * Kept as a separate method to make the start of the planning window
-     * explicit and to avoid embedding date logic in the priority formula.
-     */
-    private LocalDate dateForPlanningStart(LocalDate date) {
-        return LocalDate.now().isAfter(date) ? date : LocalDate.now();
     }
 
     /**
