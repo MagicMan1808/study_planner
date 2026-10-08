@@ -17,26 +17,19 @@ public class StudyPlannerAlgorithm {
     private static final int MAX_HOURS_PER_TASK_PER_DAY = 3;
 
     /*
-     * Controls how strongly study time is weighted toward the exam.
-     * 0.0 means no additional back-loading; 2.0 gives a noticeable,
-     * but not extreme, increase in priority as the deadline approaches.
+     * Higher values move a larger share of study time toward the exam.
+     * 0.0 gives an even distribution; 2.0 gives a noticeable gradual increase.
      */
     private static final double BACKLOADING_FACTOR = 2.0;
 
-    /**
-     * Determines the total study-time budget for a day.
-     * The budget increases as the active deadlines get closer.
-     */
     private int getDailyStudyHours(LocalDate date, List<Task> activeTasks) {
         if (activeTasks.isEmpty()) {
             return 0;
         }
 
         double totalUrgency = 0.0;
-
         for (Task task : activeTasks) {
             long daysLeft = ChronoUnit.DAYS.between(date, task.getDeadline());
-
             if (daysLeft > 0) {
                 totalUrgency += 1.0 / daysLeft;
             }
@@ -51,7 +44,6 @@ public class StudyPlannerAlgorithm {
             dailyHours = 2;
         }
 
-        // Slightly lower workload on weekends.
         if (date.getDayOfWeek().getValue() >= 6) {
             dailyHours = Math.max(1, dailyHours - 1);
         }
@@ -60,83 +52,80 @@ public class StudyPlannerAlgorithm {
     }
 
     /**
-     * Calculates a task's priority for one hour of study on the given date.
-     * More remaining work and a closer deadline increase priority. The
-     * back-loading factor gradually raises priority later in the study window.
+     * Returns the cumulative weighted share of a task's study hours that
+     * should have been scheduled by the end of the given date.
+     *
+     * Early days have lower weights and later days higher weights. Using a
+     * cumulative target (rather than only a priority score) ensures that a
+     * single-task plan also gets progressively heavier toward the exam.
      */
-    private double calculatePriority(
+    private int getTargetCumulativeHours(
             Task task,
             LocalDate date,
-            int remainingHours,
-            int alreadyScheduledToday) {
+            LocalDate today) {
 
-        long daysAvailable = ChronoUnit.DAYS.between(date, task.getDeadline());
-
-        if (remainingHours <= 0 || daysAvailable <= 0
-                || alreadyScheduledToday >= MAX_HOURS_PER_TASK_PER_DAY) {
-            return -1.0;
+        int totalHours = Math.max(0, task.getEstimatedHours());
+        if (totalHours == 0 || !date.isBefore(task.getDeadline())) {
+            return 0;
         }
 
-        long totalDaysFromToday = ChronoUnit.DAYS.between(
-                LocalDate.now(),
-                task.getDeadline()
-        );
-        if (totalDaysFromToday <= 0) {
-            return -1.0;
+        long totalStudyDays = ChronoUnit.DAYS.between(today, task.getDeadline());
+        if (totalStudyDays <= 0) {
+            return 0;
         }
 
-        long elapsedDays = ChronoUnit.DAYS.between(LocalDate.now(), date);
-        double progress = Math.max(
-                0.0,
-                Math.min(1.0, (double) elapsedDays / totalDaysFromToday)
-        );
+        long elapsedStudyDays = ChronoUnit.DAYS.between(today, date) + 1;
+        elapsedStudyDays = Math.max(0, Math.min(elapsedStudyDays, totalStudyDays));
 
-        double backloadingWeight = 1.0
-                + BACKLOADING_FACTOR * progress * progress;
-        double workloadPressure = (double) remainingHours / daysAvailable;
-        double difficultyWeight = 1.0 + Math.max(0, task.getDifficulty()) / 20.0;
+        double totalWeight = 0.0;
+        double elapsedWeight = 0.0;
 
-        return workloadPressure * backloadingWeight * difficultyWeight;
+        for (long day = 0; day < totalStudyDays; day++) {
+            double progress = totalStudyDays <= 1
+                    ? 1.0
+                    : (double) day / (totalStudyDays - 1);
+
+            double weight = 1.0 + BACKLOADING_FACTOR * progress * progress;
+            totalWeight += weight;
+
+            if (day < elapsedStudyDays) {
+                elapsedWeight += weight;
+            }
+        }
+
+        if (totalWeight == 0.0) {
+            return 0;
+        }
+
+        return (int) Math.round(totalHours * elapsedWeight / totalWeight);
     }
 
-    /**
-     * Creates a plan with a progressively stronger focus on upcoming exams.
-     *
-     * Each task is scheduled only before its deadline. The planner respects
-     * the daily total limit and the per-task daily limit. If the total workload
-     * cannot fit within those limits, some estimated hours may remain unscheduled.
-     */
     public List<StudySession> generatePlan(List<Task> tasks) {
         List<StudySession> plan = new ArrayList<>();
-
         if (tasks == null || tasks.isEmpty()) {
             return plan;
         }
 
         LocalDate today = LocalDate.now();
         Map<Task, Integer> remainingHours = new HashMap<>();
+        Map<Task, Integer> plannedHours = new HashMap<>();
+        Map<LocalDate, Map<Task, Integer>> allocationsByDate = new HashMap<>();
 
         for (Task task : tasks) {
             if (task != null) {
                 remainingHours.put(task, Math.max(0, task.getEstimatedHours()));
+                plannedHours.put(task, 0);
             }
         }
-
-        // Store allocations separately so each task has one session per day,
-        // rather than several duplicate one-hour entries.
-        Map<LocalDate, Map<Task, Integer>> allocationsByDate = new HashMap<>();
 
         for (int day = 0; day < MAX_PLANNING_DAYS; day++) {
             LocalDate currentDate = today.plusDays(day);
             List<Task> activeTasks = new ArrayList<>();
 
             for (Task task : tasks) {
-                if (task == null || remainingHours.getOrDefault(task, 0) <= 0) {
-                    continue;
-                }
-
-                // Do not schedule study time on or after the exam date.
-                if (currentDate.isBefore(task.getDeadline())) {
+                if (task != null
+                        && remainingHours.getOrDefault(task, 0) > 0
+                        && currentDate.isBefore(task.getDeadline())) {
                     activeTasks.add(task);
                 }
             }
@@ -153,26 +142,44 @@ public class StudyPlannerAlgorithm {
 
             while (dailyBudget > 0) {
                 Task selectedTask = null;
-                double bestPriority = -1.0;
+                int bestDeficit = 0;
+                long bestDaysLeft = Long.MAX_VALUE;
 
                 for (Task task : activeTasks) {
                     int remaining = remainingHours.getOrDefault(task, 0);
                     int alreadyToday = todaysAllocations.getOrDefault(task, 0);
 
-                    double priority = calculatePriority(
+                    if (remaining <= 0 || alreadyToday >= MAX_HOURS_PER_TASK_PER_DAY) {
+                        continue;
+                    }
+
+                    int targetCumulative = getTargetCumulativeHours(
                             task,
                             currentDate,
-                            remaining,
-                            alreadyToday
+                            today
+                    );
+                    int alreadyPlanned = plannedHours.getOrDefault(task, 0);
+                    int deficit = targetCumulative - alreadyPlanned;
+
+                    // Do not pull all of a task's future hours into early days.
+                    if (deficit <= 0) {
+                        continue;
+                    }
+
+                    long daysLeft = ChronoUnit.DAYS.between(
+                            currentDate,
+                            task.getDeadline()
                     );
 
-                    if (priority > bestPriority) {
-                        bestPriority = priority;
+                    if (deficit > bestDeficit
+                            || (deficit == bestDeficit && daysLeft < bestDaysLeft)) {
                         selectedTask = task;
+                        bestDeficit = deficit;
+                        bestDaysLeft = daysLeft;
                     }
                 }
 
-                if (selectedTask == null || bestPriority < 0.0) {
+                if (selectedTask == null) {
                     break;
                 }
 
@@ -181,11 +188,15 @@ public class StudyPlannerAlgorithm {
                         selectedTask,
                         remainingHours.get(selectedTask) - 1
                 );
+                plannedHours.put(
+                        selectedTask,
+                        plannedHours.get(selectedTask) + 1
+                );
                 dailyBudget--;
             }
         }
 
-        // Convert the allocations to displayable sessions in date order.
+        // Return one session per task per day, in chronological order.
         for (int day = 0; day < MAX_PLANNING_DAYS; day++) {
             LocalDate date = today.plusDays(day);
             Map<Task, Integer> dailyAllocations = allocationsByDate.get(date);
